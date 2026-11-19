@@ -11,10 +11,10 @@
 
 ## 核心特色 (Key Highlights)
 
-- **分層測試架構（34 支用例，分級 `P0` / `P1` / `P2`）**
+- **分層測試架構（36 支用例，分級 `P0` / `P1` / `P2`）**
   - **API 契約與基礎介面（11 項）**：驗證 `/api/config`、`/api/channels`、`/api/cards`、`/api/banks` 級聯查詢、`/api/recommend` 基本結構、邊界輸入、權限鎖定及 `?lang=en` 語系回傳。
   - **推薦演算法精算與規則資料品質（5 項）**：獨立實作規則重算 Oracle 逐卡核對上限溢額與方案取優、驗證多卡組合 (`combo`) 最佳分配與 `gain_over_best_single_ntd`、核對前後端數字一致，以及爬蟲規則合理性健檢。
-  - **E2E 功能與響應式版面（11 項）**：預設情境與多組花費試算、清空歸零、手動送出與明細核對、無低消過濾、比較表與爬蟲中心級聯選單，以及桌機 (`1440x900`) / 手機 (`390x844`) 水平溢位檢查。
+  - **E2E 功能與響應式版面（13 項）**：預設情境與多組花費試算、輸入字數上限與非數字攔截、截斷條件說明 `more` 來源超連結、清空歸零、手動送出與明細核對、無低消過濾、比較表與爬蟲中心級聯選單，以及桌機 (`1440x900`) / 手機 (`390x844`) 水平溢位檢查。
   - **在地化與雙語 i18n（7 項）**：`zh-Hant` UTF-8 編碼、新台幣與台北時區格式、跨語系（`zh-TW` / `en-US` / `ja-JP`）瀏覽器容錯、右上角 `繁中 / EN` 切換與 `localStorage` 持久化、`/?lang=en` 直連進入、CJK 殘留與佔位符洩漏掃描。
 - **自動產出結構化 Excel 測試報告（[reporting.py](reporting.py)）**
   - 每次 `pytest` 執行完畢自動產出 `reports/test-report-YYYYMMDD-HHMMSS.xlsx`（與 `reports/latest.xlsx`、`latest.md`）及跨次趨勢表 `reports/test-history-summary.xlsx`。

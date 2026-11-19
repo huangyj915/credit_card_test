@@ -232,6 +232,26 @@ TEST_CASE_CATALOG: list[tuple[str, dict[str, str]]] = [
         },
     ),
     (
+        "tests/test_functional_ui.py::test_channel_input_enforces_digit_limit_and_blocks_non_numeric",
+        {
+            "tc_id": "TC-UI-012",
+            "priority": "P1",
+            "category": "Functional UI",
+            "title": "每月通路消費輸入框字數上限 (7 位數) 與非數字過濾",
+            "expected": "輸入超過 7 位數截斷為 1234567，且攔截 e/+/-/. 等非數字字元。",
+        },
+    ),
+    (
+        "tests/test_functional_ui.py::test_truncated_condition_note_renders_more_link_to_source",
+        {
+            "tc_id": "TC-UI-013",
+            "priority": "P1",
+            "category": "Functional UI",
+            "title": "條件說明截斷處顯示 more 超連結導向官網來源（含 EN 模式）",
+            "expected": "過長條件說明結尾顯示省略號與 more 超連結（target=_blank、href 為有效來源網址），且 title 保留完整全文。",
+        },
+    ),
+    (
         "tests/test_i18n.py::test_zh_hant_document_lang_charset_and_text_integrity",
         {
             "tc_id": "TC-I18N-001",

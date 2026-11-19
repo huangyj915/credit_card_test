@@ -186,3 +186,92 @@ def test_no_horizontal_overflow_across_tabs(
 
     assert not errors["pageerrors"]
     assert not errors["server_errors"]
+
+
+@pytest.mark.functional
+@pytest.mark.pending_app_push
+def test_channel_input_enforces_digit_limit_and_blocks_non_numeric(
+    page: Page, base_url: str
+) -> None:
+    page.goto(base_url, wait_until="networkidle")
+
+    inputs = page.locator(".channel-input")
+    count = inputs.count()
+    assert count == 10
+    for idx in range(count):
+        expect(inputs.nth(idx)).to_have_attribute("maxlength", "7")
+        expect(inputs.nth(idx)).to_have_attribute("max", "9999999")
+
+    with page.expect_response(_is_recommend_post):
+        page.locator("#clearInputsBtn").click()
+    expect(page.locator("#totalSpendDisplay")).to_have_text("NT$ 0")
+
+    dining = page.locator('.channel-input[data-code="dining"]')
+    dining.click()
+    dining.fill("")
+    dining.type("1234567890")
+    expect(dining).to_have_value("1234567")
+    expect(page.locator("#totalSpendDisplay")).to_have_text("NT$ 1,234,567")
+
+    # Non-numeric keys like e, +, -, . should be blocked / sanitized
+    dining.fill("")
+    dining.type("50e+-1.2")
+    expect(dining).to_have_value("5012")
+    expect(page.locator("#totalSpendDisplay")).to_have_text("NT$ 5,012")
+
+
+@pytest.mark.functional
+@pytest.mark.pending_app_push
+def test_truncated_condition_note_renders_more_link_to_source(
+    page: Page, base_url: str
+) -> None:
+    page.goto(base_url, wait_until="networkidle")
+
+    with page.expect_response(_is_recommend_post):
+        page.locator('.chip[data-preset="travel"]').click()
+
+    # Expand all card breakdown details so truncated notes across cards are visible
+    page.locator("#recommendList details:not([open]) summary").evaluate_all(
+        "els => els.forEach(el => el.click())"
+    )
+
+    more_links = page.locator("#recommendList a.note-more-link")
+    assert more_links.count() >= 1, "Expected at least one truncated condition note with a 'more' link"
+
+    first_link = more_links.first
+    expect(first_link).to_be_visible()
+    expect(first_link).to_have_text("more")
+    expect(first_link).to_have_attribute("target", "_blank")
+    expect(first_link).to_have_attribute("rel", re.compile(r"noopener"))
+    href = first_link.get_attribute("href") or ""
+    assert href.startswith("http"), f"Expected valid source URL on more link, got {href!r}"
+
+    # Verify preceding span has truncated text ending with ellipsis and longer full title tooltip
+    td_info = first_link.evaluate(
+        """el => {
+            const span = el.previousElementSibling;
+            return {
+                display: span ? span.textContent : '',
+                title: span ? (span.getAttribute('title') || '') : ''
+            };
+        }"""
+    )
+    assert td_info["display"].endswith("…") or td_info["display"].endswith("..."), (
+        f"Expected truncated note to end with ellipsis, got {td_info['display']!r}"
+    )
+    assert len(td_info["title"]) >= len(td_info["display"]), (
+        f"Expected full tooltip title >= displayed truncated text: {td_info}"
+    )
+
+    # Also verify 'more' link still works properly after switching to English
+    en_btn = page.locator('.lang-btn[data-lang="en"]')
+    if en_btn.count() > 0:
+        with page.expect_response(_is_recommend_post):
+            en_btn.click()
+        page.locator("#recommendList details:not([open]) summary").evaluate_all(
+            "els => els.forEach(el => el.click())"
+        )
+        en_links = page.locator("#recommendList a.note-more-link")
+        assert en_links.count() >= 1
+        expect(en_links.first).to_have_text("more")
+        assert (en_links.first.get_attribute("href") or "").startswith("http")
