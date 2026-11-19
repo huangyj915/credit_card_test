@@ -283,7 +283,11 @@ def test_ui_displays_exact_api_recommendation_values(page: Page, base_url: str) 
 
     expected_ntd = f"NT$ {round(top_api['total_reward_ntd']):,}"
     expect(top_ui.locator(".reward-amount")).to_contain_text(expected_ntd)
-    expect(top_ui.locator(".reward-rate")).to_contain_text(f"{top_api['effective_rate_pct']}%")
+    # JS renders 4.0 as "4%", while 4.25 renders as "4.25%"
+    rate_text = top_ui.locator(".reward-rate").inner_text()
+    m_rate = re.search(r"(\d+(?:\.\d+)?)%", rate_text)
+    assert m_rate is not None, f"Missing rate percentage in {rate_text!r}"
+    assert float(m_rate.group(1)) == pytest.approx(top_api["effective_rate_pct"], abs=0.01)
 
     ui_rows = top_ui.locator(".breakdown-table tbody tr")
     expect(ui_rows).to_have_count(len(top_api["breakdown"]))
