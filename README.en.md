@@ -19,7 +19,7 @@ It continuously validates:
 
 ---
 
-## Test Scope (42 Test Cases: 14 `P0`, 25 `P1`, 3 `P2`)
+## Test Scope (46 Test Cases: 15 `P0`, 28 `P1`, 3 `P2`)
 
 | Module | Cases | Coverage |
 |---|---:|---|
@@ -28,7 +28,8 @@ It continuously validates:
 | [`tests/test_negative_e2e.py`](tests/test_negative_e2e.py) | 3 | `page.route()` negative & mocked E2E tests: `/api/recommend` HTTP 500 recovery, `public_readonly` UI locking, and scraper closed-loop UI refresh |
 | [`tests/test_i18n.py`](tests/test_i18n.py) | 7 | `zh-Hant` UTF-8 & text integrity, `NT$` & `Asia/Taipei` formatting, multi-locale browser resilience (`zh-TW`, `en-US`, `ja-JP`), `繁中 / EN` toggle, `localStorage` persistence, `/?lang=en` deep link, residual-CJK & placeholder-leak checks |
 | [`tests/test_recommendation_correctness.py`](tests/test_recommendation_correctness.py) | 6 | Independent rule-by-rule math oracle, multi-card `combo` optimality, cap-overflow & min-spend boundaries, UI-to-API value parity, non-mirror golden business invariants, and scraper-artifact data sanity checks |
-| [`tests/test_official_rate_sync.py`](tests/test_official_rate_sync.py) | 2 | UI matrix vs `/api/cards` parity and live Playwright cross-checks of each card's `official_url` liveness and main-content reward rates against issuing-bank websites |
+| [`tests/test_official_rate_sync.py`](tests/test_official_rate_sync.py) | 2 | UI matrix vs `/api/cards` parity and allowlist-validated live Playwright cross-checks of each card's `official_url` liveness and main-content reward rates |
+| [`tests/test_security.py`](tests/test_security.py) | 4 | Write-endpoint auth locks, `/api/scrape-logs` limit bounds, Excel formula injection & secret redaction unit tests, and HTTPS bank domain allowlist SSRF checks |
 
 ### Architecture, Failure Evidence & CI/CD
 - **Page Object Model ([`pages/home_page.py`](pages/home_page.py))**: Encapsulates locators and flows (`HomePage`, `MatrixTab`, `ScraperTab`) with web-first assertions and condition-based waits (no hard sleeps or deprecated APIs).

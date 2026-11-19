@@ -422,6 +422,46 @@ TEST_CASE_CATALOG: list[tuple[str, dict[str, str]]] = [
             "expected": "攔截 POST /api/scrape 回傳成功後，#scrapeResults 顯示結果、按鈕恢復可用並觸發卡片/日誌刷新。",
         },
     ),
+    (
+        "tests/test_security.py::test_write_endpoints_protected_when_locked",
+        {
+            "tc_id": "TC-SEC-001",
+            "priority": "P0",
+            "category": "Security",
+            "title": "安全回歸：所有寫入端點於鎖定模式下皆拒絕未授權呼叫",
+            "expected": "未帶憑證呼叫 /api/scrape、/api/scrape/custom、/api/banks/cathay/discover、/api/cards 皆回傳 401/403/405。",
+        },
+    ),
+    (
+        "tests/test_security.py::test_scrape_logs_limit_boundary_rejected_or_clamped",
+        {
+            "tc_id": "TC-SEC-002",
+            "priority": "P1",
+            "category": "Security",
+            "title": "安全回歸：/api/scrape-logs limit 參數超大值與負值邊界防護",
+            "expected": "limit=999999 與 limit=-1 應回傳 422 驗證錯誤或安全限制回傳筆數。",
+        },
+    ),
+    (
+        "tests/test_security.py::test_excel_formula_injection_and_secret_redaction",
+        {
+            "tc_id": "TC-SEC-003",
+            "priority": "P1",
+            "category": "Security",
+            "title": "報表安全：Excel 公式注入防護與敏感憑證遮罩單元驗證",
+            "expected": "sanitize_excel_text 中和 =/+/-/@ 開頭字串，redact_secrets 遮罩 X-Admin-Token / Bearer。",
+        },
+    ),
+    (
+        "tests/test_security.py::test_official_url_allowlist_blocks_untrusted_schemes_and_hosts",
+        {
+            "tc_id": "TC-SEC-004",
+            "priority": "P1",
+            "category": "Security",
+            "title": "安全回歸：銀行官網白名單攔截非 HTTPS、內部位址與未核准網域",
+            "expected": "http://、file://、127.0.0.1、evil.example 皆被白名單拒絕，僅核准台灣銀行 HTTPS 官網。",
+        },
+    ),
 ]
 
 

@@ -164,6 +164,7 @@ def make_page(browser, base_url: str, request: pytest.FixtureRequest):
         accept_language: str | None = None,
         viewport: dict[str, int] | None = None,
         allow_server_errors: bool = False,
+        disable_trace: bool = False,
     ):
         headers = {}
         if accept_language:
@@ -174,7 +175,8 @@ def make_page(browser, base_url: str, request: pytest.FixtureRequest):
             viewport=viewport or {"width": 1440, "height": 900},
             extra_http_headers=headers,
         )
-        context.tracing.start(screenshots=True, snapshots=True, sources=True)
+        if not disable_trace:
+            context.tracing.start(screenshots=True, snapshots=True, sources=True)
         page = context.new_page()
         page.set_default_timeout(15000)
 
@@ -210,7 +212,7 @@ def make_page(browser, base_url: str, request: pytest.FixtureRequest):
         page.on("response", _on_response)
         page.on("console", _on_console)
 
-        created.append((context, page, errors, allow_server_errors))
+        created.append((context, page, errors, allow_server_errors, disable_trace))
         return page, errors
 
     yield _create
@@ -218,7 +220,7 @@ def make_page(browser, base_url: str, request: pytest.FixtureRequest):
     failed = bool(getattr(request.node, "_call_failed", False))
     stem = _safe_artifact_stem(request.node.nodeid)
 
-    for idx, (context, pg, _, _) in enumerate(created):
+    for idx, (context, pg, _, _, disable_trace) in enumerate(created):
         suffix = f"-{idx}" if len(created) > 1 else ""
         try:
             if failed:
@@ -227,8 +229,9 @@ def make_page(browser, base_url: str, request: pytest.FixtureRequest):
                     pg.screenshot(path=str(artifacts_dir / f"{stem}{suffix}.png"), full_page=True)
                 except Exception:
                     pass
-                context.tracing.stop(path=str(artifacts_dir / f"{stem}{suffix}-trace.zip"))
-            else:
+                if not disable_trace:
+                    context.tracing.stop(path=str(artifacts_dir / f"{stem}{suffix}-trace.zip"))
+            elif not disable_trace:
                 context.tracing.stop()
         finally:
             context.close()

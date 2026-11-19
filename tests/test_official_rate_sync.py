@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from urllib.parse import urlparse
 import pytest
 import requests
 from playwright.sync_api import Page, expect
@@ -12,6 +13,40 @@ DEAD_PAGE_PATTERNS = re.compile(
     r"(404\s*找不到頁面|找不到頁面|系統發生錯誤|Page\s*Not\s*Found|404\s*Not\s*Found)",
     re.IGNORECASE,
 )
+
+APPROVED_BANK_DOMAINS = (
+    "cathaybk.com.tw",
+    "taishinbank.com.tw",
+    "esunbank.com",
+    "esunbank.com.tw",
+    "fubon.com",
+    "ctbcbank.com",
+    "sinopac.com",
+    "ubot.com.tw",
+    "dbs.com.tw",
+    "hsbc.com.tw",
+    "megabank.com.tw",
+    "firstbank.com.tw",
+    "hncb.com.tw",
+    "feib.com.tw",
+    "scsb.com.tw",
+    "yuantabank.com.tw",
+    "rakuten.com.tw",
+    "bankchb.com",
+    "tcb-bank.com.tw",
+    "kgibank.com.tw",
+    "landbank.com.tw",
+    "bot.com.tw",
+)
+
+
+def is_approved_bank_url(url: str) -> bool:
+    """Allow only HTTPS URLs hosted on approved Taiwan issuing-bank domains."""
+    parsed = urlparse((url or "").strip())
+    if parsed.scheme != "https" or not parsed.hostname:
+        return False
+    host = parsed.hostname.lower().rstrip(".")
+    return any(host == d or host.endswith(f".{d}") for d in APPROVED_BANK_DOMAINS)
 
 
 @pytest.mark.official_sync
@@ -84,6 +119,10 @@ def test_displayed_card_rates_match_official_bank_websites(
             slug = card["card_slug"]
             rule_rates = sorted({float(r["rate"]) for r in card.get("rules", []) if r.get("rate") is not None})
             if not url:
+                continue
+
+            if not is_approved_bank_url(url):
+                dead_urls.append(f"{slug} (blocked unapproved/non-HTTPS official_url={url})")
                 continue
 
             pg = ctx.new_page()

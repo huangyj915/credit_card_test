@@ -13,12 +13,13 @@
 
 ## 核心特色 (Key Highlights)
 
-- **分層測試架構（42 支用例：`P0` 14 支、`P1` 25 支、`P2` 3 支）**
+- **分層測試架構（46 支用例：`P0` 15 支、`P1` 28 支、`P2` 3 支）**
   - **API 契約與基礎介面（11 項）**：驗證 `/api/config`、`/api/channels`、`/api/cards`、`/api/banks` 級聯查詢、`/api/recommend` 基本結構、邊界輸入、權限鎖定及 `?lang=en` 語系回傳。
   - **推薦演算法精算、黃金案例與資料品質（6 項）**：獨立實作規則重算 Oracle 逐卡核對上限溢額與方案取優、驗證多卡組合 (`combo`) 最佳分配、非鏡像黃金業務不變量（單調性與上下界）、前後端數值一致與爬蟲規則健檢。
-  - **銀行官網回饋率即時比對（2 項）**：驗證前端比較表與 `/api/cards` 一致性，並以 Playwright 開啟各卡 `official_url` 主內容區比對銀行官網利率與連結存活度。
+  - **銀行官網回饋率即時比對（2 項）**：驗證前端比較表與 `/api/cards` 一致性，並先驗證 HTTPS 與台灣銀行官網白名單，再以 Playwright 開啟主內容區比對利率與連結存活度。
   - **E2E 功能與響應式版面（13 項）**：預設情境試算、7 位數輸入上限與非數字過濾、截斷條件說明 `more` 來源超連結、清空歸零、手動送出、無低消過濾、比較表與爬蟲級聯選單，以及桌機 (`1440x900`) / 手機 (`390x844`) 水平溢位檢查。
   - **負向異常與 Mock E2E（3 項）**：使用 Playwright `page.route()` 模擬 `/api/recommend` 500 容錯恢復、`public_readonly` 唯讀鎖定與 `POST /api/scrape` 爬蟲閉環刷新。
+  - **安全回歸與報表防護（4 項）**：驗證全部寫入端點未授權攔截、`/api/scrape-logs` `limit` 邊界保護、Excel 公式注入消毒（`sanitize_excel_text`）與憑證遮罩（`redact_secrets`），以及銀行官網白名單防 SSRF。
   - **在地化與雙語 i18n（7 項）**：`zh-Hant` UTF-8 編碼、新台幣與台北時區格式、跨語系（`zh-TW` / `en-US` / `ja-JP`）瀏覽器容錯、右上角 `繁中 / EN` 切換與 `localStorage` 持久化、`/?lang=en` 直連、CJK 殘留與佔位符洩漏掃描。
 - **Playwright 穩定性與失敗證據留存（[conftest.py](conftest.py) / [pages/](pages/)）**
   - 採用 **Page Object Model (`HomePage`、`MatrixTab`、`ScraperTab`)** 集中管理定位器與共用操作；全面改用 Web-First Assertions 與條件等待，消除硬等待與棄用 API。
@@ -49,7 +50,8 @@ credit_card_test/
 │   ├── test_negative_e2e.py               # page.route() 負向容錯、唯讀鎖定與爬蟲閉環測試 (3)
 │   ├── test_i18n.py                       # 在地化、多語系瀏覽器容錯與 繁中/EN i18n 測試 (7)
 │   ├── test_official_rate_sync.py         # 比較表一致性與銀行官網即時回饋率/連結比對 (2)
-│   └── test_recommendation_correctness.py # 演算法獨立對拍、黃金案例、上限邊界與資料健檢 (6)
+│   ├── test_recommendation_correctness.py # 演算法獨立對拍、黃金案例、上限邊界與資料健檢 (6)
+│   └── test_security.py                   # 寫入端點權限、limit 邊界、公式注入與官網白名單 (4)
 ├── conftest.py                            # CLI 選項、Trace/截圖失敗證據、錯誤監聽與報告掛鉤
 ├── pytest.ini                             # pytest markers 設定
 ├── README.md / README.en.md               # 專案說明（繁中 / English）

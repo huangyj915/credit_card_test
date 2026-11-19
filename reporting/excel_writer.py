@@ -9,6 +9,18 @@ from openpyxl.utils import get_column_letter
 from reporting.classifier import enrich_results, extract_dev_issues
 
 
+DANGEROUS_EXCEL_PREFIXES = ("=", "+", "@", "\t", "\r")
+
+
+def sanitize_excel_text(value):
+    """Neutralize Excel Formula / CSV Injection on untrusted non-formula text cells."""
+    if not isinstance(value, str) or not value:
+        return value
+    if value[0] in DANGEROUS_EXCEL_PREFIXES or (value[0] == "-" and len(value) > 1):
+        return "'" + value
+    return value
+
+
 def _apply_header_style(cell, bg_hex: str = "1E293B") -> None:
     cell.font = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
     cell.fill = PatternFill(start_color=bg_hex, end_color=bg_hex, fill_type="solid")
@@ -67,7 +79,7 @@ def write_excel_report(
     ws_sum.merge_cells("A1:H1")
 
     meta_rows = [
-        ("目標網址 (Target URL)", base_url),
+        ("目標網址 (Target URL)", sanitize_excel_text(base_url)),
         ("測試時間 (Executed At)", f"{started_at.strftime('%Y-%m-%d %H:%M:%S')} ~ {finished_at.strftime('%H:%M:%S')}"),
         ("總耗時 (Duration)", f"{elapsed:.2f} s"),
         ("強制英語 i18n (--require-en)", str(require_en)),
@@ -168,13 +180,13 @@ def write_excel_report(
             vals = [
                 iss["issue_no"],
                 iss["priority"],
-                iss["owner"],
+                sanitize_excel_text(iss["owner"]),
                 fail_rate_formula,
-                iss["title"],
-                iss["component"],
-                iss["root_cause"],
-                iss["fix_guide"],
-                iss["tc_ids_str"],
+                sanitize_excel_text(iss["title"]),
+                sanitize_excel_text(iss["component"]),
+                sanitize_excel_text(iss["root_cause"]),
+                sanitize_excel_text(iss["fix_guide"]),
+                sanitize_excel_text(iss["tc_ids_str"]),
             ]
             for col, v in enumerate(vals, start=1):
                 c = ws_sum.cell(r_num, col, v)
@@ -232,17 +244,17 @@ def write_excel_report(
             )
             vals = [
                 iss["issue_no"],
-                iss["issue_key"],
+                sanitize_excel_text(iss["issue_key"]),
                 iss["priority"],
-                iss["owner"],
+                sanitize_excel_text(iss["owner"]),
                 fail_rate_formula,
-                iss["component"],
-                iss["title"],
-                iss["actual_vs_expected"],
-                iss["root_cause"],
-                iss["fix_guide"],
-                iss["tc_ids_str"],
-                (iss["raw_detail"] or "")[:3000],
+                sanitize_excel_text(iss["component"]),
+                sanitize_excel_text(iss["title"]),
+                sanitize_excel_text(iss["actual_vs_expected"]),
+                sanitize_excel_text(iss["root_cause"]),
+                sanitize_excel_text(iss["fix_guide"]),
+                sanitize_excel_text(iss["tc_ids_str"]),
+                sanitize_excel_text((iss["raw_detail"] or "")[:3000]),
             ]
             for col, v in enumerate(vals, start=1):
                 c = ws_iss.cell(row_idx, col, v)
@@ -288,18 +300,18 @@ def write_excel_report(
 
     for row_idx, r in enumerate(enriched, start=2):
         vals = [
-            r["tc_id"],
+            sanitize_excel_text(r["tc_id"]),
             r["priority"],
-            r["category"],
-            r["title"],
-            r["expected"],
-            r["nodeid"],
+            sanitize_excel_text(r["category"]),
+            sanitize_excel_text(r["title"]),
+            sanitize_excel_text(r["expected"]),
+            sanitize_excel_text(r["nodeid"]),
             r["status"],
             r["duration"],
-            r["issue_key"] or "-",
-            r["error_reason"],
-            r["root_cause"],
-            (r.get("detail") or "")[:2000],
+            sanitize_excel_text(r["issue_key"] or "-"),
+            sanitize_excel_text(r["error_reason"]),
+            sanitize_excel_text(r["root_cause"]),
+            sanitize_excel_text((r.get("detail") or "")[:2000]),
         ]
         for col, v in enumerate(vals, start=1):
             c = ws_tc.cell(row_idx, col, v)
@@ -407,7 +419,7 @@ def update_history_summary_excel(
     row_vals = [
         run_id,
         started_at.strftime("%Y-%m-%d %H:%M:%S"),
-        base_url,
+        sanitize_excel_text(base_url),
         str(require_en),
         total,
         passed,
@@ -417,8 +429,8 @@ def update_history_summary_excel(
         fail_rate_formula,
         len(issues),
         round(elapsed, 2),
-        issues_summary,
-        report_file,
+        sanitize_excel_text(issues_summary),
+        sanitize_excel_text(report_file),
     ]
     for col, val in enumerate(row_vals, start=1):
         c = ws.cell(target_row, col, val)

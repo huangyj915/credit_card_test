@@ -20,17 +20,19 @@ on:
         required: false
         default: false
       run_full_suite:
-        description: "Run the entire test suite (all 42 tests including responsive, data_quality & official_sync)"
+        description: "Run the entire test suite (all 46 tests including responsive, data_quality & official_sync)"
         type: boolean
         required: false
         default: true
 
+# Least-privilege default; only the separate deploy-pages job requests contents: write
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   pytest-playwright:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout test suite (credit_card_test)
         uses: actions/checkout@v4
@@ -93,10 +95,12 @@ jobs:
         env:
           BASE_URL: ${{ inputs.base_url || 'http://127.0.0.1:8000' }}
           REQUIRE_EN_I18N: ${{ inputs.require_en || 'false' }}
+          EVENT_NAME: ${{ github.event_name }}
+          RUN_FULL_SUITE: ${{ inputs.run_full_suite || 'false' }}
         run: |
-          if [ "${{ github.event_name }}" = "schedule" ]; then
+          if [ "$EVENT_NAME" = "schedule" ]; then
             ../.venv-test/bin/pytest -m official_sync --junitxml=reports/junit.xml
-          elif [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.run_full_suite }}" = "true" ]; then
+          elif [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$RUN_FULL_SUITE" = "true" ]; then
             ../.venv-test/bin/pytest --junitxml=reports/junit.xml
           else
             ../.venv-test/bin/pytest -m "not responsive and not data_quality and not pending_app_push and not official_sync" --junitxml=reports/junit.xml
@@ -127,11 +131,24 @@ jobs:
             test-suite/reports/artifacts/**
           retention-days: 30
 
+  deploy-pages:
+    needs: pytest-playwright
+    if: always() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Download latest report artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: test-reports-${{ github.run_number }}
+          path: pages-dist
+
       - name: Publish HTML & Excel dashboard to GitHub Pages (gh-pages)
-        if: always() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         continue-on-error: true
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: test-suite/reports
-          exclude_assets: "test-report-*.md,test-report-*.xlsx,junit.xml"
+          publish_dir: pages-dist
+          exclude_assets: "junit.xml,artifacts/**"

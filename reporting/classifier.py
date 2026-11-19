@@ -3,6 +3,19 @@ from __future__ import annotations
 import re
 from reporting.catalog import lookup_test_meta
 
+SECRET_PATTERNS = [
+    re.compile(r"(?i)(Bearer)\s+[A-Za-z0-9._\-]+"),
+    re.compile(r"(?i)(X-Admin-Token|Authorization|Cookie|ADMIN_TOKEN)\s*[:=]\s*(?:Bearer\s+)?[^\s,'\";\]]+"),
+]
+
+
+def redact_secrets(text: str) -> str:
+    """Mask sensitive headers or tokens before persisting details into reports."""
+    out = text or ""
+    for pat in SECRET_PATTERNS:
+        out = pat.sub(lambda m: f"{m.group(1)}=[REDACTED]", out)
+    return out
+
 
 def classify_error_and_root_cause(
     nodeid: str, status: str, detail: str
@@ -171,13 +184,15 @@ def classify_error_and_root_cause(
 def enrich_results(results: list[dict]) -> list[dict]:
     enriched = []
     for r in results:
+        safe_detail = redact_secrets(r.get("detail", ""))
         meta = lookup_test_meta(r["nodeid"])
         info = classify_error_and_root_cause(
-            r["nodeid"], r["status"], r.get("detail", "")
+            r["nodeid"], r["status"], safe_detail
         )
         enriched.append(
             {
                 **r,
+                "detail": safe_detail,
                 "tc_id": meta["tc_id"],
                 "priority": meta["priority"],
                 "category": meta["category"],
