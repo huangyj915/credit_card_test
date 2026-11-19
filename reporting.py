@@ -930,11 +930,19 @@ def write_excel_report(
     else:
         for offset, iss in enumerate(issues):
             r_num = issue_hdr_row + 1 + offset
+            issue_key = iss["issue_key"]
+            hit_expr = (
+                f'(COUNTIFS(\'Test Cases\'!$I$2:$I${last_tc_row},"{issue_key}",\'Test Cases\'!$G$2:$G${last_tc_row},"FAILED")'
+                f'+COUNTIFS(\'Test Cases\'!$I$2:$I${last_tc_row},"{issue_key}",\'Test Cases\'!$G$2:$G${last_tc_row},"ERROR"))'
+            )
+            fail_rate_formula = (
+                f'={hit_expr}&"/"&$B$10&" ("&TEXT(IF($B$10>0,{hit_expr}/$B$10,0),"0.0%")&")"'
+            )
             vals = [
                 iss["issue_no"],
                 iss["priority"],
                 iss["owner"],
-                iss["fail_rate"],
+                fail_rate_formula,
                 iss["title"],
                 iss["component"],
                 iss["root_cause"],
@@ -987,12 +995,20 @@ def write_excel_report(
         ws_iss.cell(2, 1, "✅ 本次無待修復 Issue！").font = Font(name="Calibri", size=11, bold=True, color="166534")
     else:
         for row_idx, iss in enumerate(issues, start=2):
+            issue_key = iss["issue_key"]
+            hit_expr = (
+                f'(COUNTIFS(\'Test Cases\'!$I$2:$I${last_tc_row},"{issue_key}",\'Test Cases\'!$G$2:$G${last_tc_row},"FAILED")'
+                f'+COUNTIFS(\'Test Cases\'!$I$2:$I${last_tc_row},"{issue_key}",\'Test Cases\'!$G$2:$G${last_tc_row},"ERROR"))'
+            )
+            fail_rate_formula = (
+                f'={hit_expr}&"/"&Summary!$B$10&" ("&TEXT(IF(Summary!$B$10>0,{hit_expr}/Summary!$B$10,0),"0.0%")&")"'
+            )
             vals = [
                 iss["issue_no"],
                 iss["issue_key"],
                 iss["priority"],
                 iss["owner"],
-                iss["fail_rate"],
+                fail_rate_formula,
                 iss["component"],
                 iss["title"],
                 iss["actual_vs_expected"],
@@ -1163,6 +1179,11 @@ def update_history_summary_excel(
     if target_row is None:
         target_row = ws.max_row + 1
 
+    fail_rate_formula = (
+        f'=IF((G{target_row}+H{target_row})>0,'
+        f'(G{target_row}+H{target_row})&"/"&E{target_row}&" ("&TEXT(IF(E{target_row}>0,(G{target_row}+H{target_row})/E{target_row},0),"0.0%")&")",'
+        f'"-")'
+    )
     row_vals = [
         run_id,
         started_at.strftime("%Y-%m-%d %H:%M:%S"),
@@ -1173,7 +1194,7 @@ def update_history_summary_excel(
         failed,
         errored,
         skipped,
-        err_rate_str,
+        fail_rate_formula,
         len(issues),
         round(elapsed, 2),
         issues_summary,
