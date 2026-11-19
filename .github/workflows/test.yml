@@ -8,39 +8,86 @@ on:
   workflow_dispatch:
     inputs:
       base_url:
-        description: "Target site base URL"
+        description: "Optional external URL (leave empty to boot credit_card_recommend locally in CI)"
         required: false
-        default: "https://cards.zillurl.com"
+        default: ""
       require_en:
         description: "Fail if English (en) i18n is not active"
         type: boolean
         required: false
         default: false
+      run_full_suite:
+        description: "Run all 34 tests including responsive mobile & data_quality checks"
+        type: boolean
+        required: false
+        default: true
 
 jobs:
   pytest-playwright:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout test suite (credit_card_test)
         uses: actions/checkout@v4
+        with:
+          path: test-suite
+
+      - name: Checkout target app (credit_card_recommend)
+        if: ${{ !inputs.base_url }}
+        uses: actions/checkout@v4
+        with:
+          repository: huangyj915/credit_card_recommend
+          path: target-app
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: "pip"
+          cache-dependency-path: |
+            test-suite/requirements.txt
+            target-app/requirements.txt
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          if [ -f target-app/requirements.txt ]; then
+            pip install -r target-app/requirements.txt
+          fi
+          pip install -r test-suite/requirements.txt
           playwright install chromium --with-deps
 
+      - name: Start local target app server (uvicorn)
+        if: ${{ !inputs.base_url }}
+        working-directory: target-app
+        run: |
+          mkdir -p data
+          nohup uvicorn app.main:app --host 127.0.0.1 --port 8000 > /tmp/uvicorn.log 2>&1 &
+          echo "UVICORN_PID=$!" >> "$GITHUB_ENV"
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:8000/api/config > /dev/null; then
+              echo "Target server is ready on http://127.0.0.1:8000"
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/uvicorn.log
+          exit 1
+
       - name: Run automated test suite
+        working-directory: test-suite
         env:
-          BASE_URL: ${{ inputs.base_url || 'https://cards.zillurl.com' }}
+          BASE_URL: ${{ inputs.base_url || 'http://127.0.0.1:8000' }}
           REQUIRE_EN_I18N: ${{ inputs.require_en || 'false' }}
-        run: pytest
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.run_full_suite }}" = "true" ]; then
+            pytest
+          else
+            pytest -m "not responsive and not data_quality"
+          fi
+
+      - name: Stop local target app server
+        if: always() && env.UVICORN_PID != ''
+        run: kill "$UVICORN_PID" || true
 
       - name: Upload test reports (Excel & Markdown)
         if: always()
@@ -48,7 +95,7 @@ jobs:
         with:
           name: test-reports-${{ github.run_number }}
           path: |
-            reports/latest.xlsx
-            reports/latest.md
-            reports/test-history-summary.xlsx
+            test-suite/reports/latest.xlsx
+            test-suite/reports/latest.md
+            test-suite/reports/test-history-summary.xlsx
           retention-days: 30

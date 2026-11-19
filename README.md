@@ -20,7 +20,7 @@
   - 每次 `pytest` 執行完畢自動產出 `reports/test-report-YYYYMMDD-HHMMSS.xlsx`（與 `reports/latest.xlsx`、`latest.md`）及跨次趨勢表 `reports/test-history-summary.xlsx`。
   - 內含 **`Summary`**（KPI 與 Priority `P0`/`P1`/`P2` 分級統計）、**`Issues`**（自動去重歸納開發端待修清單，同列顯示 **Fail Rate**、影響元件、根本原因與修復建議）、**`Test Cases`**（完整 TC 明細與紅綠標色）。
 - **環境彈性切換 & CI 就緒**
-  - 透過 `--base-url` 與 `--require-en` 可同時驗證線上站台與本機開發站；內建 [GitHub Actions 工作流程](.github/workflows/test.yml)，自動執行測試並上傳 `.xlsx` / `.md` 報告為 Artifact。
+  - 透過 `--base-url` 與 `--require-en` 可同時驗證線上站台與本機開發站；內建 [GitHub Actions 工作流程](.github/workflows/test.yml)，於 CI Runner 內自動拉取 `credit_card_recommend` 啟動本地 Uvicorn 進行隔離測試（避開線上 Cloudflare 防爬蟲攔截），並上傳 `.xlsx` / `.md` 報告為 Artifact。
 
 ---
 
