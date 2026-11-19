@@ -5,25 +5,27 @@
 ![Python](https://img.shields.io/badge/Python-3.9%2B-3776AB?logo=python&logoColor=white)
 ![pytest](https://img.shields.io/badge/pytest-8.x-0A9EDC?logo=pytest&logoColor=white)
 ![Playwright](https://img.shields.io/badge/Playwright-Chromium%2FChrome-2EAD33?logo=playwright&logoColor=white)
-![openpyxl](https://img.shields.io/badge/Reports-Excel%20%2B%20Markdown-217346?logo=microsoftexcel&logoColor=white)
+![openpyxl](https://img.shields.io/badge/Reports-Excel%20%2B%20HTML%20%2B%20MD-217346?logo=microsoftexcel&logoColor=white)
 
-針對 [台灣信用卡回饋比較 & 通路推薦系統 (`cards.zillurl.com`)](https://cards.zillurl.com/)（原始專案：[huangyj915/credit_card_recommend](https://github.com/huangyj915/credit_card_recommend)）建置的端對端自動化測試框架，涵蓋 **REST API 契約驗證、推薦演算法精算對拍、銀行官網回饋率即時比對、Chromium E2E 功能與響應式排版檢查，以及雙語（`zh-TW` / `en`）i18n 驗證**，並內建 **Excel / Markdown 自動測試報告引擎**。
+針對 [台灣信用卡回饋比較 & 通路推薦系統 (`cards.zillurl.com`)](https://cards.zillurl.com/)（原始專案：[huangyj915/credit_card_recommend](https://github.com/huangyj915/credit_card_recommend)）建置的端對端自動化測試框架，採 **Page Object Model (POM)** 與模組化報表架構，涵蓋 **REST API 契約、推薦演算法精算與黃金案例、銀行官網回饋率即時比對、負向異常 E2E (`page.route` Mock)、響應式排版與雙語 (`zh-TW` / `en`) i18n 驗證**。
 
 ---
 
 ## 核心特色 (Key Highlights)
 
-- **分層測試架構（38 支用例：`P0` 13 支、`P1` 22 支、`P2` 3 支）**
+- **分層測試架構（42 支用例：`P0` 14 支、`P1` 25 支、`P2` 3 支）**
   - **API 契約與基礎介面（11 項）**：驗證 `/api/config`、`/api/channels`、`/api/cards`、`/api/banks` 級聯查詢、`/api/recommend` 基本結構、邊界輸入、權限鎖定及 `?lang=en` 語系回傳。
-  - **推薦演算法精算與規則資料品質（5 項）**：獨立實作規則重算 Oracle 逐卡核對上限溢額與方案取優、驗證多卡組合 (`combo`) 最佳分配與 `gain_over_best_single_ntd`、核對前後端數字一致，以及爬蟲規則合理性健檢。
-  - **銀行官網回饋率即時比對（2 項）**：驗證前端比較表與 `/api/cards` 資料一致性，並以 Playwright 開啟各卡 `official_url` 比對實際銀行官網利率與連結有效性。
-  - **E2E 功能與響應式版面（13 項）**：預設情境與多組花費試算、輸入字數上限與非數字攔截、截斷條件說明 `more` 來源超連結、清空歸零、手動送出與明細核對、無低消過濾、比較表與爬蟲中心級聯選單，以及桌機 (`1440x900`) / 手機 (`390x844`) 水平溢位檢查。
-  - **在地化與雙語 i18n（7 項）**：`zh-Hant` UTF-8 編碼、新台幣與台北時區格式、跨語系（`zh-TW` / `en-US` / `ja-JP`）瀏覽器容錯、右上角 `繁中 / EN` 切換與 `localStorage` 持久化、`/?lang=en` 直連進入、CJK 殘留與佔位符洩漏掃描。
-- **自動產出結構化 Excel 測試報告（[reporting.py](reporting.py)）**
-  - 每次 `pytest` 執行完畢自動產出 `reports/test-report-YYYYMMDD-HHMMSS.xlsx`（與 `reports/latest.xlsx`、`latest.md`）及跨次趨勢表 `reports/test-history-summary.xlsx`。
-  - 內含 **`Summary`**（KPI 與 Priority `P0`/`P1`/`P2` 分級統計）、**`Issues`**（自動去重歸納開發端待修清單，同列以 Excel 公式計算 **Fail Rate**、標註影響元件、根本原因與修復建議）、**`Test Cases`**（完整 38 支 TC 明細與紅綠標色）。
-- **環境彈性切換 & CI 就緒**
-  - 透過 `--base-url` 與 `--require-en` 可同時驗證線上站台與本機開發站；內建 [GitHub Actions 工作流程](.github/workflows/test.yml)，於 CI Runner 內自動拉取 `credit_card_recommend` 啟動本地 Uvicorn 進行隔離測試（避開線上 Cloudflare 防爬蟲攔截），並上傳 `.xlsx` / `.md` 報告為 Artifact。
+  - **推薦演算法精算、黃金案例與資料品質（6 項）**：獨立實作規則重算 Oracle 逐卡核對上限溢額與方案取優、驗證多卡組合 (`combo`) 最佳分配、非鏡像黃金業務不變量（單調性與上下界）、前後端數值一致與爬蟲規則健檢。
+  - **銀行官網回饋率即時比對（2 項）**：驗證前端比較表與 `/api/cards` 一致性，並以 Playwright 開啟各卡 `official_url` 主內容區比對銀行官網利率與連結存活度。
+  - **E2E 功能與響應式版面（13 項）**：預設情境試算、7 位數輸入上限與非數字過濾、截斷條件說明 `more` 來源超連結、清空歸零、手動送出、無低消過濾、比較表與爬蟲級聯選單，以及桌機 (`1440x900`) / 手機 (`390x844`) 水平溢位檢查。
+  - **負向異常與 Mock E2E（3 項）**：使用 Playwright `page.route()` 模擬 `/api/recommend` 500 容錯恢復、`public_readonly` 唯讀鎖定與 `POST /api/scrape` 爬蟲閉環刷新。
+  - **在地化與雙語 i18n（7 項）**：`zh-Hant` UTF-8 編碼、新台幣與台北時區格式、跨語系（`zh-TW` / `en-US` / `ja-JP`）瀏覽器容錯、右上角 `繁中 / EN` 切換與 `localStorage` 持久化、`/?lang=en` 直連、CJK 殘留與佔位符洩漏掃描。
+- **Playwright 穩定性與失敗證據留存（[conftest.py](conftest.py) / [pages/](pages/)）**
+  - 採用 **Page Object Model (`HomePage`、`MatrixTab`、`ScraperTab`)** 集中管理定位器與共用操作；全面改用 Web-First Assertions 與條件等待，消除硬等待與棄用 API。
+  - 測試失敗時自動留存 **Playwright Trace (`*-trace.zip`)** 與 **全頁截圖 (`.png`)** 供 [trace.playwright.dev](https://trace.playwright.dev/) 回放除錯，通過則自動丟棄不佔空間。
+- **模組化報表引擎與 CI/CD（[reporting/](reporting/) / [.github/workflows/test.yml](.github/workflows/test.yml)）**
+  - 自動產出 **Excel（含動態 `Fail Rate` 公式與歷次趨勢表）**、**Markdown（自動輸出至 GitHub Actions Step Summary）**、**JUnit XML** 與 **HTML 互動總覽頁 (`index.html`)**。
+  - CI 採獨立雙虛擬環境啟動本地 `credit_card_recommend` 避開 Cloudflare 403，支援 **每日排程 (`schedule`) 監控銀行官網**，並將歷史趨勢與線上報告自動發佈至 **`gh-pages` 分支（GitHub Pages）**。
 
 ---
 
@@ -32,21 +34,29 @@
 ```text
 credit_card_test/
 ├── .github/workflows/
-│   └── test.yml                         # GitHub Actions CI（自動跑測試並上傳 Excel/MD 報告）
+│   └── test.yml                           # GitHub Actions CI（隔離環境、Step Summary、每日排程、gh-pages）
+├── pages/
+│   └── home_page.py                       # Page Object Model (HomePage, MatrixTab, ScraperTab)
+├── reporting/
+│   ├── catalog.py                         # 42 支 Test Case 目錄與 Priority 分級定義
+│   ├── classifier.py                      # 錯誤分類、根因歸納與 Issue 去重引擎
+│   ├── excel_writer.py                    # Excel 報表與動態 Fail Rate 公式產生器
+│   ├── markdown_writer.py                 # Markdown 報表產生器（同步至 Step Summary）
+│   └── html_writer.py                     # 獨立 HTML 總覽儀表板（供 GitHub Pages 展示）
 ├── tests/
-│   ├── test_api.py                      # API 契約、試算結構、權限與 ?lang=en 測試 (11)
-│   ├── test_functional_ui.py            # Playwright E2E 功能流程與桌機/手機響應式測試 (13)
-│   ├── test_i18n.py                     # 在地化、多語系瀏覽器容錯與 繁中/EN i18n 測試 (7)
-│   ├── test_official_rate_sync.py       # 比較表一致性與銀行官網即時回饋率/連結比對 (2)
-│   └── test_recommendation_correctness.py # 推薦演算法獨立對拍、上限邊界與規則資料健檢 (5)
-├── conftest.py                          # CLI 選項、Chrome/Chromium fixture 與錯誤監聽、報告掛鉤
-├── reporting.py                         # Test Case 目錄、根因分類引擎、Excel & Markdown 產生器
-├── pytest.ini                           # pytest markers 設定
-├── README.md / README.en.md             # 專案說明（繁中 / English）
-└── requirements.txt                     # 相依套件
+│   ├── test_api.py                        # API 契約、試算結構、權限與 ?lang=en 測試 (11)
+│   ├── test_functional_ui.py              # Playwright E2E 功能流程與桌機/手機響應式測試 (13)
+│   ├── test_negative_e2e.py               # page.route() 負向容錯、唯讀鎖定與爬蟲閉環測試 (3)
+│   ├── test_i18n.py                       # 在地化、多語系瀏覽器容錯與 繁中/EN i18n 測試 (7)
+│   ├── test_official_rate_sync.py         # 比較表一致性與銀行官網即時回饋率/連結比對 (2)
+│   └── test_recommendation_correctness.py # 演算法獨立對拍、黃金案例、上限邊界與資料健檢 (6)
+├── conftest.py                            # CLI 選項、Trace/截圖失敗證據、錯誤監聽與報告掛鉤
+├── pytest.ini                             # pytest markers 設定
+├── README.md / README.en.md               # 專案說明（繁中 / English）
+└── requirements.txt                       # 相依套件
 ```
 
-> 註：本機執行後會自動產出 `reports/` 目錄（已列入 `.gitignore` 不推上 GitHub）；CI 執行報告則會保留於 GitHub Actions Artifacts 中供下載。
+> 註：本機執行後會自動產出 `reports/` 目錄（已列入 `.gitignore` 不推上 `main`）；CI 報告保留於 GitHub Actions Artifacts 與 `gh-pages` 分支。
 
 ---
 
@@ -65,7 +75,7 @@ pip install -r requirements.txt
 ### 2. 執行測試
 
 ```bash
-# 執行全部 38 支測試（預設目標：https://cards.zillurl.com）
+# 執行全部 42 支測試（預設目標：https://cards.zillurl.com）
 pytest
 
 # 指定本機開發站台並強制驗收英語 i18n
@@ -74,6 +84,7 @@ pytest --base-url http://127.0.0.1:8000 --require-en
 # 只執行特定類型測試
 pytest -m api
 pytest -m functional
+pytest -m negative
 pytest -m i18n
 pytest -m math
 pytest -m official_sync
@@ -81,14 +92,3 @@ pytest -m official_sync
 # 開啟瀏覽器畫面觀察執行過程 / 關閉自動產出報告
 pytest --headed --no-report
 ```
-
----
-
-## 實測抓出與驗證修復之缺陷紀錄
-
-本測試套件於開發與回歸驗證階段實際協助定位並追蹤修復以下問題（本機執行之歷次紀錄保留於 `reports/test-history-summary.xlsx`）：
-
-1. **手機版響應式溢位（`390x844`）**：偵測出 `recommend` 分頁產生 22px～43px 水平捲軸溢位，協助定位 `.input-panel` 寬度異常並驗證修復至 0 溢位。
-2. **英語 API、推薦明細與歷史日誌（`scrape_logs`）漏翻**：檢出 `/api/cards?lang=en` 部分卡名（如 `福華聯名卡`、`星展everyday鈦金卡`）、爬蟲規則 `note` 與 SQLite `scrape_logs` 殘留中文，追蹤修復至雙語全面通過。
-3. **爬蟲規則解析異常數字**：檢出 `monthly_cap_ntd=3.0 / 1.0` 與 `rate=19% / 30%` 等誤解析數字，協助清洗與修正解析邏輯。
-4. **銀行官網失效連結與過時回饋率**：透過即時比對各銀行官網，抓出 2 筆失效 `official_url`（`fubon-j` 404、`ubot-jihe` 系統錯誤）與 3 筆與官網不符之回饋率（`taishin-gogo`、`sinopac-dawho`、`custom-richart`），最終於最新實測（`20261119-232717`）全數修復並驗證 **38 支用例中 37 passed, 1 skipped, 0 failed（37/37 已執行測試 100% 通過，0 待修 Issue；1 項因本機未設 `ADMIN_TOKEN` 略過）**。

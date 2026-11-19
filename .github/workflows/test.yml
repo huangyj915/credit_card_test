@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  schedule:
+    # Daily 09:00 Asia/Taipei (01:00 UTC) official bank rate & URL sync monitoring
+    - cron: "0 1 * * *"
   workflow_dispatch:
     inputs:
       base_url:
@@ -17,10 +20,13 @@ on:
         required: false
         default: false
       run_full_suite:
-        description: "Run all 34 tests including responsive mobile & data_quality checks"
+        description: "Run the entire test suite (all 42 tests including responsive, data_quality & official_sync)"
         type: boolean
         required: false
         default: true
+
+permissions:
+  contents: write
 
 jobs:
   pytest-playwright:
@@ -42,26 +48,35 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: "pip"
-          cache-dependency-path: |
-            test-suite/requirements.txt
-            target-app/requirements.txt
 
-      - name: Install dependencies
+      - name: Install isolated virtual environments
         run: |
-          python -m pip install --upgrade pip
           if [ -f target-app/requirements.txt ]; then
-            pip install -r target-app/requirements.txt
+            python -m venv .venv-app
+            .venv-app/bin/pip install --upgrade pip
+            .venv-app/bin/pip install -r target-app/requirements.txt
           fi
-          pip install -r test-suite/requirements.txt
-          playwright install chromium --with-deps
+          python -m venv .venv-test
+          .venv-test/bin/pip install --upgrade pip
+          .venv-test/bin/pip install -r test-suite/requirements.txt
+          .venv-test/bin/playwright install chromium --with-deps
+
+      - name: Restore previous CI history workbook from gh-pages (if present)
+        continue-on-error: true
+        run: |
+          mkdir -p test-suite/reports
+          git clone --depth 1 --branch gh-pages "https://github.com/${{ github.repository }}.git" gh-pages-prev 2>/dev/null || true
+          if [ -f gh-pages-prev/test-history-summary.xlsx ]; then
+            cp gh-pages-prev/test-history-summary.xlsx test-suite/reports/test-history-summary.xlsx
+          fi
+          rm -rf gh-pages-prev
 
       - name: Start local target app server (uvicorn)
         if: ${{ !inputs.base_url }}
         working-directory: target-app
         run: |
           mkdir -p data
-          nohup uvicorn app.main:app --host 127.0.0.1 --port 8000 > /tmp/uvicorn.log 2>&1 &
+          nohup ../.venv-app/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 > /tmp/uvicorn.log 2>&1 &
           echo "UVICORN_PID=$!" >> "$GITHUB_ENV"
           for i in $(seq 1 30); do
             if curl -sf http://127.0.0.1:8000/api/config > /dev/null; then
@@ -79,17 +94,26 @@ jobs:
           BASE_URL: ${{ inputs.base_url || 'http://127.0.0.1:8000' }}
           REQUIRE_EN_I18N: ${{ inputs.require_en || 'false' }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.run_full_suite }}" = "true" ]; then
-            pytest
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            ../.venv-test/bin/pytest -m official_sync --junitxml=reports/junit.xml
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.run_full_suite }}" = "true" ]; then
+            ../.venv-test/bin/pytest --junitxml=reports/junit.xml
           else
-            pytest -m "not responsive and not data_quality and not pending_app_push and not official_sync"
+            ../.venv-test/bin/pytest -m "not responsive and not data_quality and not pending_app_push and not official_sync" --junitxml=reports/junit.xml
           fi
 
       - name: Stop local target app server
         if: always() && env.UVICORN_PID != ''
         run: kill "$UVICORN_PID" || true
 
-      - name: Upload test reports (Excel & Markdown)
+      - name: Publish Markdown summary to GitHub Actions Step Summary
+        if: always()
+        run: |
+          if [ -f test-suite/reports/latest.md ]; then
+            cat test-suite/reports/latest.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload test reports & failure evidence (Excel, JUnit, Trace, Screenshots)
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -97,5 +121,17 @@ jobs:
           path: |
             test-suite/reports/latest.xlsx
             test-suite/reports/latest.md
+            test-suite/reports/index.html
+            test-suite/reports/junit.xml
             test-suite/reports/test-history-summary.xlsx
+            test-suite/reports/artifacts/**
           retention-days: 30
+
+      - name: Publish HTML & Excel dashboard to GitHub Pages (gh-pages)
+        if: always() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        continue-on-error: true
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: test-suite/reports
+          exclude_assets: "test-report-*.md,test-report-*.xlsx,junit.xml"

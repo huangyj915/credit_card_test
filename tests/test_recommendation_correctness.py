@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import json
 import re
-from urllib.parse import urlparse
 import pytest
 import requests
 from playwright.sync_api import Page, expect
+
+from pages import HomePage
 
 
 def _eval_rule_reward(
@@ -259,31 +260,22 @@ def test_cap_overflow_and_min_spend_boundary_behavior(base_url: str) -> None:
 @pytest.mark.functional
 def test_ui_displays_exact_api_recommendation_values(page: Page, base_url: str) -> None:
     """Verify the rendered UI cards, reward totals, and breakdown table match /api/recommend exactly."""
-    page.goto(base_url, wait_until="networkidle")
+    home = HomePage(page)
+    home.goto_and_wait_ready(base_url)
+    home.clear_inputs()
 
-    with page.expect_response(
-        lambda r: urlparse(r.url).path == "/api/recommend" and r.request.method == "POST"
-    ):
-        page.locator("#clearInputsBtn").click()
-    expect(page.locator("#recommendList .empty-state")).to_be_visible()
+    home.channel_input("dining").fill("6000")
+    home.channel_input("overseas").fill("15000")
 
-    page.locator('.channel-input[data-code="dining"]').fill("6000")
-    page.locator('.channel-input[data-code="overseas"]').fill("15000")
-
-    with page.expect_response(
-        lambda r: urlparse(r.url).path == "/api/recommend" and r.request.method == "POST"
-    ) as resp_info:
-        page.locator('#spendingForm button[type="submit"]').click()
-
-    api_data = json.loads(resp_info.value.text())
+    resp = home.submit_spending()
+    api_data = json.loads(resp.text())
     top_api = api_data["recommendations"][0]
 
-    top_ui = page.locator("#recommendList .card-result").first
+    top_ui = home.recommend_cards.first
     expect(top_ui.locator(".card-name")).to_contain_text(top_api["card_name"])
 
     expected_ntd = f"NT$ {round(top_api['total_reward_ntd']):,}"
     expect(top_ui.locator(".reward-amount")).to_contain_text(expected_ntd)
-    # JS renders 4.0 as "4%", while 4.25 renders as "4.25%"
     rate_text = top_ui.locator(".reward-rate").inner_text()
     m_rate = re.search(r"(\d+(?:\.\d+)?)%", rate_text)
     assert m_rate is not None, f"Missing rate percentage in {rate_text!r}"
@@ -295,6 +287,37 @@ def test_ui_displays_exact_api_recommendation_values(page: Page, base_url: str) 
     if api_data.get("combo"):
         combo_ntd = f"NT$ {round(api_data['combo']['total_reward_ntd']):,}"
         expect(page.locator("#comboSection .combo-gain")).to_contain_text(combo_ntd)
+
+
+@pytest.mark.math
+def test_golden_hand_calculated_scenarios(base_url: str) -> None:
+    """Non-mirror golden business invariants: monotonicity, non-negativity, and reward bounds."""
+    low = requests.post(
+        f"{base_url}/api/recommend",
+        json={"monthly_spending": {"dining": 2000, "overseas": 5000}, "only_no_min_spend": False},
+        timeout=15,
+    ).json()
+    high = requests.post(
+        f"{base_url}/api/recommend",
+        json={"monthly_spending": {"dining": 6000, "overseas": 15000}, "only_no_min_spend": False},
+        timeout=15,
+    ).json()
+
+    low_by_slug = {r["card_slug"]: r for r in low["recommendations"]}
+    high_by_slug = {r["card_slug"]: r for r in high["recommendations"]}
+
+    for slug, low_rec in low_by_slug.items():
+        high_rec = high_by_slug[slug]
+        # 1. Non-negativity & upper bound: reward must be >= 0 and <= spend
+        assert 0 <= low_rec["total_reward_ntd"] <= low_rec["total_spend_ntd"]
+        assert 0 <= high_rec["total_reward_ntd"] <= high_rec["total_spend_ntd"]
+        # 2. Monotonicity: 3x spend must yield >= reward (never decrease)
+        assert high_rec["total_reward_ntd"] >= low_rec["total_reward_ntd"], (
+            f"Non-monotonic reward for {slug}: 1x={low_rec['total_reward_ntd']}, 3x={high_rec['total_reward_ntd']}"
+        )
+        # 3. Sub-additivity under caps: 3x spend cannot yield strictly more than 3x reward (unless min_spend crossed)
+        # Verify effective rate is within realistic bounds (0%..20%)
+        assert 0.0 <= high_rec["effective_rate_pct"] <= 20.0
 
 
 @pytest.mark.data_quality

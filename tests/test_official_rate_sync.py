@@ -5,6 +5,8 @@ import pytest
 import requests
 from playwright.sync_api import Page, expect
 
+from pages import HomePage, MatrixTab
+
 PCT_RE = re.compile(r"(\d+(?:\.\d+)?)\s*%")
 DEAD_PAGE_PATTERNS = re.compile(
     r"(404\s*找不到頁面|找不到頁面|系統發生錯誤|Page\s*Not\s*Found|404\s*Not\s*Found)",
@@ -20,13 +22,14 @@ def test_ui_displayed_rates_match_api_cards_source_of_truth(
     cards = requests.get(f"{base_url}/api/cards", timeout=15).json()
     channels = requests.get(f"{base_url}/api/channels", timeout=15).json()
 
-    page.goto(base_url, wait_until="networkidle")
-    page.locator('.tab-btn[data-tab="matrix"]').click()
-    expect(page.locator("#matrixTable tbody tr")).to_have_count(len(cards))
+    home = HomePage(page)
+    matrix = MatrixTab(page)
+    home.goto_and_wait_ready(base_url)
+    home.switch_tab("matrix")
+    expect(matrix.rows).to_have_count(len(cards))
 
-    rows = page.locator("#matrixTable tbody tr")
     for idx, card in enumerate(cards):
-        row = rows.nth(idx)
+        row = matrix.rows.nth(idx)
         expect(row.locator("td").first).to_contain_text(card["card_name"])
         cells = row.locator("td")
         for ch_idx, ch in enumerate(channels, start=1):
@@ -47,6 +50,20 @@ def test_ui_displayed_rates_match_api_cards_source_of_truth(
                 f"Matrix rate mismatch for {card['card_slug']}.{ch['code']}: "
                 f"UI={m.group(1)}% vs API={expected_rate}%"
             )
+
+
+def _extract_main_content_text(pg: Page) -> str:
+    """Prefer main content containers over full body to reduce footer/legal boilerplate noise."""
+    for sel in ("main", "article", '[role="main"]', "#main", ".main-content", ".card-detail"):
+        loc = pg.locator(sel)
+        if loc.count() > 0:
+            try:
+                text = " ".join(loc.first.inner_text(timeout=2000).split())
+                if len(text) >= 200 and PCT_RE.search(text):
+                    return text
+            except Exception:
+                continue
+    return " ".join(pg.locator("body").inner_text().split())
 
 
 @pytest.mark.official_sync
@@ -73,24 +90,29 @@ def test_displayed_card_rates_match_official_bank_websites(
             try:
                 resp = pg.goto(url, wait_until="domcontentloaded", timeout=15000)
                 try:
-                    pg.wait_for_load_state("networkidle", timeout=5000)
+                    pg.wait_for_function(
+                        "() => document.body && document.body.innerText.trim().length > 50",
+                        timeout=6000,
+                    )
                 except Exception:
                     pass
-                pg.wait_for_timeout(800)
 
                 status = resp.status if resp else 0
-                body_text = " ".join(pg.locator("body").inner_text().split())
+                full_body = " ".join(pg.locator("body").inner_text().split())
 
-                if status >= 400 or len(body_text) < 50 or DEAD_PAGE_PATTERNS.search(body_text):
+                if status >= 400 or len(full_body) < 50 or DEAD_PAGE_PATTERNS.search(full_body):
                     dead_urls.append(
-                        f"{slug} (HTTP={status}, len={len(body_text)}, snippet={body_text[:40]!r}, url={url})"
+                        f"{slug} (HTTP={status}, len={len(full_body)}, snippet={full_body[:40]!r}, url={url})"
                     )
                     continue
 
                 if not rule_rates:
                     continue
 
-                official_pcts = {round(float(m), 4) for m in PCT_RE.findall(body_text)}
+                scoped_text = _extract_main_content_text(pg)
+                official_pcts = {round(float(m), 4) for m in PCT_RE.findall(scoped_text)}
+                if not official_pcts:
+                    official_pcts = {round(float(m), 4) for m in PCT_RE.findall(full_body)}
                 if not official_pcts:
                     unverified_blocked.append(f"{slug} (no % extracted on {url})")
                     continue
