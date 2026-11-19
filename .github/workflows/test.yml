@@ -1,0 +1,54 @@
+name: E2E & i18n Automated Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Target site base URL"
+        required: false
+        default: "https://cards.zillurl.com"
+      require_en:
+        description: "Fail if English (en) i18n is not active"
+        type: boolean
+        required: false
+        default: false
+
+jobs:
+  pytest-playwright:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          playwright install chromium --with-deps
+
+      - name: Run automated test suite
+        env:
+          BASE_URL: ${{ inputs.base_url || 'https://cards.zillurl.com' }}
+          REQUIRE_EN_I18N: ${{ inputs.require_en || 'false' }}
+        run: pytest
+
+      - name: Upload test reports (Excel & Markdown)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-${{ github.run_number }}
+          path: |
+            reports/latest.xlsx
+            reports/latest.md
+            reports/test-history-summary.xlsx
+          retention-days: 30
