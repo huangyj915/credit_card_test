@@ -30,7 +30,7 @@ It is designed to continuously verify:
 | [`tests/test_official_rate_sync.py`](tests/test_official_rate_sync.py) | 2 | UI matrix vs `/api/cards` parity and live Playwright cross-checks of each card's `official_url` liveness and displayed reward rates against issuing-bank websites |
 
 ### Automated Reporting & CI/CD
-- **Excel & Markdown Reports ([`reporting.py`](reporting.py))**: Every `pytest` run generates `reports/test-report-YYYYMMDD-HHMMSS.xlsx`, `reports/latest.xlsx`, `reports/latest.md`, and updates `reports/test-history-summary.xlsx`.
+- **Excel & Markdown Reports ([`reporting.py`](reporting.py))**: Every `pytest` run locally generates `reports/test-report-YYYYMMDD-HHMMSS.xlsx`, `reports/latest.xlsx`, `reports/latest.md`, and updates `reports/test-history-summary.xlsx` (`reports/` is gitignored and kept local; CI reports are uploaded as GitHub Actions Artifacts).
   - Workbooks include `Summary` (KPI metrics, `P0`/`P1`/`P2` breakdown, open dev issues), `Issues` (deduplicated action items with live Excel `Fail Rate` formulas `errors / total`, root cause, and fix guidance), and `Test Cases`.
 - **GitHub Actions ([`.github/workflows/test.yml`](.github/workflows/test.yml))**: Boots `credit_card_recommend` locally inside the CI runner (`127.0.0.1:8000`) to avoid Cloudflare bot-protection `403` blocks on cloud IPs, runs the core CI suite on `push`/`pull_request` (and full 38-case suite on `workflow_dispatch`), and uploads `.xlsx`/`.md` artifacts.
 

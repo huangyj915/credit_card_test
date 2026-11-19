@@ -39,16 +39,14 @@ credit_card_test/
 │   ├── test_i18n.py                     # 在地化、多語系瀏覽器容錯與 繁中/EN i18n 測試 (7)
 │   ├── test_official_rate_sync.py       # 比較表一致性與銀行官網即時回饋率/連結比對 (2)
 │   └── test_recommendation_correctness.py # 推薦演算法獨立對拍、上限邊界與規則資料健檢 (5)
-├── reports/
-│   ├── latest.xlsx / latest.md          # 最新一次執行報告
-│   ├── test-history-summary.xlsx        # 歷次執行趨勢與 Fail Rate 彙總
-│   └── test-report-*.xlsx/.md           # 各次歷史測試報告紀錄
 ├── conftest.py                          # CLI 選項、Chrome/Chromium fixture 與錯誤監聽、報告掛鉤
 ├── reporting.py                         # Test Case 目錄、根因分類引擎、Excel & Markdown 產生器
 ├── pytest.ini                           # pytest markers 設定
 ├── README.md / README.en.md             # 專案說明（繁中 / English）
 └── requirements.txt                     # 相依套件
 ```
+
+> 註：本機執行後會自動產出 `reports/` 目錄（已列入 `.gitignore` 不推上 GitHub）；CI 執行報告則會保留於 GitHub Actions Artifacts 中供下載。
 
 ---
 
@@ -88,7 +86,7 @@ pytest --headed --no-report
 
 ## 實測抓出與驗證修復之缺陷紀錄
 
-本測試套件於開發與回歸驗證階段實際協助定位並追蹤修復以下問題（完整歷次紀錄見 [`reports/test-history-summary.xlsx`](reports/test-history-summary.xlsx)）：
+本測試套件於開發與回歸驗證階段實際協助定位並追蹤修復以下問題（本機執行之歷次紀錄保留於 `reports/test-history-summary.xlsx`）：
 
 1. **手機版響應式溢位（`390x844`）**：偵測出 `recommend` 分頁產生 22px～43px 水平捲軸溢位，協助定位 `.input-panel` 寬度異常並驗證修復至 0 溢位。
 2. **英語 API、推薦明細與歷史日誌（`scrape_logs`）漏翻**：檢出 `/api/cards?lang=en` 部分卡名（如 `福華聯名卡`、`星展everyday鈦金卡`）、爬蟲規則 `note` 與 SQLite `scrape_logs` 殘留中文，追蹤修復至雙語全面通過。
