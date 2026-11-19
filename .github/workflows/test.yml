@@ -82,7 +82,7 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.run_full_suite }}" = "true" ]; then
             pytest
           else
-            pytest -m "not responsive and not data_quality and not pending_app_push"
+            pytest -m "not responsive and not data_quality and not pending_app_push and not official_sync"
           fi
 
       - name: Stop local target app server

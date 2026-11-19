@@ -371,6 +371,26 @@ TEST_CASE_CATALOG: list[tuple[str, dict[str, str]]] = [
             "expected": "規則中不應出現 >15% 異常利率、<50 元誤解析上限，或將年份(如 2024)誤當 monthly_cap_ntd。",
         },
     ),
+    (
+        "tests/test_official_rate_sync.py::test_ui_displayed_rates_match_api_cards_source_of_truth",
+        {
+            "tc_id": "TC-SYNC-001",
+            "priority": "P0",
+            "category": "Official Sync",
+            "title": "網站比較表顯示回饋率與後端 /api/cards 資料一致性檢查",
+            "expected": "各卡通路比較表 (#matrixTable) 每一格顯示的最高回饋率與 /api/cards 規則計算完全吻合。",
+        },
+    ),
+    (
+        "tests/test_official_rate_sync.py::test_displayed_card_rates_match_official_bank_websites",
+        {
+            "tc_id": "TC-SYNC-002",
+            "priority": "P1",
+            "category": "Official Sync",
+            "title": "網站卡片回饋率與銀行官網實際公告比對（含官網連結有效性）",
+            "expected": "所有卡片 official_url 皆可正常開啟且非 404/錯誤頁，且網站顯示的規則回饋率皆可於官網頁面吻合查證。",
+        },
+    ),
 ]
 
 
@@ -535,6 +555,19 @@ def classify_error_and_root_cause(
             "issue_title": "爬蟲解析出異常回饋率 (>15%) 或異常月上限 (如 3.0 / 1.0 / 年份 2024.0) 導致推薦排名失真",
             "issue_actual_vs_expected": "實際：規則含 rate=19%/30% 或 monthly_cap_ntd=3.0/1.0/2024.0；預期：利率與上限應符合真實卡片權益格式。",
             "issue_fix_guide": "1) 強化爬蟲對「最高 X%」與「上限 N 元」的邊界判斷（過濾日期 YYYY/MM、排除小於 50 元的假上限與異常高 %）；2) 重爬或修正資料庫異常規則。",
+        }
+
+    if "Dead/broken official_url" in text or "Rate mismatch vs official bank page" in text:
+        return {
+            "error_reason": "網站部分卡片顯示之回饋率或官網連結與實際銀行官網不符（含 404/錯誤頁與過時利率）",
+            "root_cause": "資料同步與來源連結缺陷 (Outdated Seed Data / Broken Official URL) — 銀行官網已改版或停售/調降利率，但站內規則與 URL 未同步更新",
+            "suggested_action": "更新失效之 official_url（如 fubon-j、ubot-jihe），並重爬或校正與官網不符之回饋率（如 taishin-gogo、sinopac-dawho、custom-richart）。",
+            "issue_key": "ISS-DATA-OFFICIAL-SYNC",
+            "issue_owner": "開發端 (Seed Data / Scraper)",
+            "issue_component": "SQLite cards.official_url & card_rules.rate",
+            "issue_title": "網站顯示回饋率或官網來源連結與銀行官網現況不吻合",
+            "issue_actual_vs_expected": next((ln.strip() for ln in text.splitlines() if ln.strip().startswith("E ")), "官網連結失效或利率與官網不符"),
+            "issue_fix_guide": "1) 修正 404/錯誤之 official_url（fubon-j、ubot-jihe）；2) 依銀行官網最新公告更新過時回饋率（taishin-gogo 3%→3.8%、sinopac-dawho 7%→官網最新、richart 3.8%→3.88%）並定期排程重爬。",
         }
 
     if "mismatch:" in text or "suboptimal card" in text:
