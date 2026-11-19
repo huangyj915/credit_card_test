@@ -301,6 +301,56 @@ TEST_CASE_CATALOG: list[tuple[str, dict[str, str]]] = [
             "expected": "直接開啟 /?lang=en 首屏即套用英文介面 (<html lang='en'>) 且主標題為英文。",
         },
     ),
+    (
+        "tests/test_recommendation_correctness.py::test_recommend_oracle_matches_card_rules_and_caps",
+        {
+            "tc_id": "TC-MATH-001",
+            "priority": "P0",
+            "category": "Math & Logic",
+            "title": "獨立演算法對拍：單卡各通路回饋與有效回饋率精算驗證",
+            "expected": "依 /api/cards 規則獨立重算，每張卡之 applied_rate、actual_reward_ntd、total_reward_ntd 與 effective_rate_pct 完全吻合。",
+        },
+    ),
+    (
+        "tests/test_recommendation_correctness.py::test_combo_allocation_maximizes_channel_rewards_and_gain",
+        {
+            "tc_id": "TC-MATH-002",
+            "priority": "P0",
+            "category": "Math & Logic",
+            "title": "多卡組合最佳化分配與多賺金額 (gain_over_best_single) 驗證",
+            "expected": "combo 每個通路皆選取實際回饋最高之卡片，總回饋與 gain_over_best_single_ntd 精算無誤。",
+        },
+    ),
+    (
+        "tests/test_recommendation_correctness.py::test_cap_overflow_and_min_spend_boundary_behavior",
+        {
+            "tc_id": "TC-MATH-003",
+            "priority": "P1",
+            "category": "Math & Logic",
+            "title": "月回饋上限溢額計算與低消門檻過濾邊界驗證",
+            "expected": "未達上限依加碼率、超過上限之溢額退回基本回饋率，且 only_no_min_spend=true 正確排除有低消卡別。",
+        },
+    ),
+    (
+        "tests/test_recommendation_correctness.py::test_ui_displays_exact_api_recommendation_values",
+        {
+            "tc_id": "TC-MATH-004",
+            "priority": "P1",
+            "category": "Math & Logic",
+            "title": "前端 UI 渲染金額與 /api/recommend API 回傳數值一致性驗證",
+            "expected": "畫面呈現之最高卡名、月省金額、綜合回饋率、明細列數與多卡組合金額皆與 API 回應一致。",
+        },
+    ),
+    (
+        "tests/test_recommendation_correctness.py::test_card_rules_sanity_no_scraper_parse_artifacts",
+        {
+            "tc_id": "TC-DATA-001",
+            "priority": "P1",
+            "category": "Data Quality",
+            "title": "卡片規則資料健檢：排除爬蟲誤解析異常利率或月上限",
+            "expected": "規則中不應出現 >15% 異常利率、<50 元誤解析上限，或將年份(如 2024)誤當 monthly_cap_ntd。",
+        },
+    ),
 ]
 
 
@@ -452,6 +502,32 @@ def classify_error_and_root_cause(
             "issue_title": "[測試腳本問題] 清空按鈕後未等待非同步回應完成導致明細比對競態",
             "issue_actual_vs_expected": "舊版測試未等待 clearInputsBtn 之 POST /api/recommend 完成。",
             "issue_fix_guide": "已補上 page.expect_response 等待清空請求完成（無需開發端修改）。",
+        }
+
+    if "scraper-parsed rule anomalies" in text or "unrealistic rate=" in text or "monthly_cap_ntd=" in text:
+        return {
+            "error_reason": "卡片規則庫含爬蟲誤解析之異常利率 (>15%) 或月上限（如 3.0 / 1.0 / 年份 2024.0）",
+            "root_cause": "資料與爬蟲解析缺陷 (Scraper Parsing Artifact) — 將活動滿額折抵/年份/利率數字誤存為 rate 或 monthly_cap_ntd",
+            "suggested_action": "修正爬蟲規則擷取正規式並清理 SQLite 既有異常規則。",
+            "issue_key": "ISS-DATA-SCRAPER-RULES",
+            "issue_owner": "開發端 (Scraper / DB Data)",
+            "issue_component": "SQLite card_rules & Playwright 爬蟲解析器",
+            "issue_title": "爬蟲解析出異常回饋率 (>15%) 或異常月上限 (如 3.0 / 1.0 / 年份 2024.0) 導致推薦排名失真",
+            "issue_actual_vs_expected": "實際：規則含 rate=19%/30% 或 monthly_cap_ntd=3.0/1.0/2024.0；預期：利率與上限應符合真實卡片權益格式。",
+            "issue_fix_guide": "1) 強化爬蟲對「最高 X%」與「上限 N 元」的邊界判斷（過濾日期 YYYY/MM、排除小於 50 元的假上限與異常高 %）；2) 重爬或修正資料庫異常規則。",
+        }
+
+    if "mismatch:" in text or "suboptimal card" in text:
+        return {
+            "error_reason": "推薦演算法計算數值與規則獨立驗算結果不符",
+            "root_cause": "推薦試算演算法邏輯缺陷 (Recommender Calculation Mismatch)",
+            "suggested_action": "核對推薦引擎中上限溢額、方案切換與多卡組合計算邏輯。",
+            "issue_key": "ISS-MATH-RECOMMEND",
+            "issue_owner": "開發端 (Backend Recommender)",
+            "issue_component": "POST /api/recommend 演算法引擎",
+            "issue_title": "推薦試算結果或最佳多卡組合計算與規則定義不符",
+            "issue_actual_vs_expected": next((ln.strip() for ln in text.splitlines() if ln.strip().startswith("E ")), "數值比對不一致"),
+            "issue_fix_guide": "檢查 recommender 計算溢額基本回饋、方案取優與 combo 分配邏輯。",
         }
 
     first_err = next((ln.strip() for ln in text.splitlines() if ln.strip().startswith("E ")), "")

@@ -11,8 +11,9 @@
 
 ## 核心特色 (Key Highlights)
 
-- **分層測試架構（29 支用例，分級 `P0` / `P1` / `P2`）**
-  - **API 契約與核心演算法（11 項）**：驗證 `/api/config`、`/api/channels`、`/api/cards`、`/api/banks` 級聯查詢、`/api/recommend` 回饋排序與多卡組合精算、邊界輸入、權限鎖定及 `?lang=en` 語系回傳。
+- **分層測試架構（34 支用例，分級 `P0` / `P1` / `P2`）**
+  - **API 契約與基礎介面（11 項）**：驗證 `/api/config`、`/api/channels`、`/api/cards`、`/api/banks` 級聯查詢、`/api/recommend` 基本結構、邊界輸入、權限鎖定及 `?lang=en` 語系回傳。
+  - **推薦演算法精算與規則資料品質（5 項）**：獨立實作規則重算 Oracle 逐卡核對上限溢額與方案取優、驗證多卡組合 (`combo`) 最佳分配與 `gain_over_best_single_ntd`、核對前後端數字一致，以及爬蟲規則合理性健檢。
   - **E2E 功能與響應式版面（11 項）**：預設情境與多組花費試算、清空歸零、手動送出與明細核對、無低消過濾、比較表與爬蟲中心級聯選單，以及桌機 (`1440x900`) / 手機 (`390x844`) 水平溢位檢查。
   - **在地化與雙語 i18n（7 項）**：`zh-Hant` UTF-8 編碼、新台幣與台北時區格式、跨語系（`zh-TW` / `en-US` / `ja-JP`）瀏覽器容錯、右上角 `繁中 / EN` 切換與 `localStorage` 持久化、`/?lang=en` 直連進入、CJK 殘留與佔位符洩漏掃描。
 - **自動產出結構化 Excel 測試報告（[reporting.py](reporting.py)）**
@@ -30,9 +31,10 @@ credit_card_test/
 ├── .github/workflows/
 │   └── test.yml                # GitHub Actions CI（自動跑測試並上傳 Excel/MD 報告）
 ├── tests/
-│   ├── test_api.py             # API 契約、試算排序、權限與 ?lang=en 測試
-│   ├── test_functional_ui.py   # Playwright E2E 功能流程與桌機/手機響應式測試
-│   └── test_i18n.py            # 在地化、多語系瀏覽器容錯與 繁中/EN i18n 測試
+│   ├── test_api.py                       # API 契約、試算結構、權限與 ?lang=en 測試
+│   ├── test_functional_ui.py             # Playwright E2E 功能流程與桌機/手機響應式測試
+│   ├── test_i18n.py                      # 在地化、多語系瀏覽器容錯與 繁中/EN i18n 測試
+│   └── test_recommendation_correctness.py # 推薦演算法獨立對拍、上限邊界與規則資料健檢
 ├── reports/
 │   ├── latest.xlsx / latest.md # 最新一次執行報告
 │   ├── test-history-summary.xlsx # 歷次執行趨勢與 Fail Rate 彙總
