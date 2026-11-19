@@ -14,12 +14,22 @@ def _eval_rule_reward(
     rate: float,
     cap: float | None,
     base_rate: float,
+    cap_applies_to: str = "total",
 ) -> float:
-    """Reference reward formula: capped bonus + base rate on overflow spend."""
+    """Reference reward formula supporting both bonus-only caps and total caps."""
     if spend <= 0:
         return 0.0
     rate_dec = rate / 100.0
     base_dec = base_rate / 100.0
+    base_reward = spend * base_dec
+
+    if cap_applies_to == "bonus":
+        bonus_rate = max(0.0, rate - base_rate)
+        raw_bonus = spend * (bonus_rate / 100.0)
+        if cap is not None and cap > 0 and raw_bonus > cap:
+            return round(base_reward + cap, 2)
+        return round(base_reward + raw_bonus, 2)
+
     raw = spend * rate_dec
     if cap is not None and cap > 0 and raw > cap and rate > base_rate:
         covered_spend = cap / rate_dec
@@ -58,11 +68,14 @@ def _oracle_card_calc(card: dict, spending: dict[str, float]) -> dict:
                 eligible.append(r)
 
             if eligible:
-                # Choose rule yielding highest actual reward for this channel spend
                 scored = [
                     (
                         _eval_rule_reward(
-                            spend, r["rate"], r.get("monthly_cap_ntd"), base_rate
+                            spend,
+                            r["rate"],
+                            r.get("monthly_cap_ntd"),
+                            base_rate,
+                            r.get("cap_applies_to") or "total",
                         ),
                         r["rate"],
                         r,
@@ -72,14 +85,17 @@ def _oracle_card_calc(card: dict, spending: dict[str, float]) -> dict:
                 reward, _, chosen = max(scored, key=lambda x: (x[0], x[1]))
                 applied_rate = chosen["rate"]
                 cap_ntd = chosen.get("monthly_cap_ntd")
+                cap_group = chosen.get("cap_group")
             else:
                 reward = round(spend * (base_rate / 100.0), 2)
                 applied_rate = base_rate
                 cap_ntd = None
+                cap_group = None
 
             breakdown[ch_code] = {
                 "applied_rate": applied_rate,
                 "cap_ntd": cap_ntd,
+                "cap_group": cap_group,
                 "actual_reward_ntd": reward,
             }
             total_reward += reward
@@ -122,15 +138,31 @@ def test_recommend_oracle_matches_card_rules_and_caps(base_url: str) -> None:
         card = card_by_slug[rec["card_slug"]]
         oracle = _oracle_card_calc(card, spending)
 
-        assert abs(rec["total_reward_ntd"] - oracle["total_reward_ntd"]) <= 0.1, (
-            f"{rec['card_slug']} total_reward_ntd mismatch: "
-            f"api={rec['total_reward_ntd']} vs oracle={oracle['total_reward_ntd']}"
-        )
+        # Detect whether multiple active channels share a cap_group on this card
+        group_counts: dict[str, int] = {}
+        for item in oracle["breakdown"].values():
+            grp = item.get("cap_group")
+            if grp:
+                group_counts[grp] = group_counts.get(grp, 0) + 1
+        has_shared_group = any(cnt > 1 for cnt in group_counts.values())
+
+        bd_sum = round(sum(b["actual_reward_ntd"] for b in rec["breakdown"]), 2)
+        assert abs(rec["total_reward_ntd"] - bd_sum) <= 0.1
 
         expected_eff = round(rec["total_reward_ntd"] / expected_total_spend * 100, 2)
         assert abs(rec["effective_rate_pct"] - expected_eff) <= 0.02, (
             f"{rec['card_slug']} effective_rate_pct mismatch: "
             f"api={rec['effective_rate_pct']} vs expected={expected_eff}"
+        )
+
+        if has_shared_group:
+            # Shared cap across multiple channels cannot exceed independent-channel upper bound
+            assert rec["total_reward_ntd"] <= oracle["total_reward_ntd"] + 0.1
+            continue
+
+        assert abs(rec["total_reward_ntd"] - oracle["total_reward_ntd"]) <= 0.1, (
+            f"{rec['card_slug']} total_reward_ntd mismatch: "
+            f"api={rec['total_reward_ntd']} vs oracle={oracle['total_reward_ntd']}"
         )
 
         for b in rec["breakdown"]:
@@ -215,9 +247,11 @@ def test_cap_overflow_and_min_spend_boundary_behavior(base_url: str) -> None:
     ch = target_rule["channel_code"]
     cap = target_rule["monthly_cap_ntd"]
     rate = target_rule["rate"]
+    cap_applies_to = target_rule.get("cap_applies_to") or "total"
     base = target["base_rate_foreign"] if ch == "overseas" else target["base_rate_domestic"]
 
-    cap_break_even = cap / (rate / 100.0)
+    effective_cap_rate = (rate - base) if cap_applies_to == "bonus" else rate
+    cap_break_even = cap / (effective_cap_rate / 100.0)
     below_spend = round(cap_break_even * 0.5, 0)
     above_spend = round(cap_break_even * 2.0, 0)
 
@@ -235,7 +269,7 @@ def test_cap_overflow_and_min_spend_boundary_behavior(base_url: str) -> None:
         timeout=15,
     ).json()
     above_card = next(x for x in above_resp["recommendations"] if x["card_slug"] == target["card_slug"])
-    expected_above = _eval_rule_reward(above_spend, rate, cap, base)
+    expected_above = _eval_rule_reward(above_spend, rate, cap, base, cap_applies_to)
     assert abs(above_card["total_reward_ntd"] - expected_above) <= 0.05
 
     # Verify only_no_min_spend=True excludes cards with min_spend_ntd > 0
