@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Credit Card E2E &amp; i18n Test Report</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; background: #f8fafc; color: #0f172a; }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 24px; }
+    header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+    .badge { padding: 6px 14px; border-radius: 999px; font-weight: 700; font-size: 14px; }
+    .badge-pass { background: #dcfce7; color: #166534; }
+    .badge-fail { background: #fee2e2; color: #991b1b; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; }
+    .card .k { font-size: 12px; color: #64748b; }
+    .card .v { font-size: 24px; font-weight: 700; margin-top: 4px; }
+    .panel { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-bottom: 20px; overflow-x: auto; }
+    .downloads a { display: inline-block; margin-right: 10px; padding: 6px 12px; background: #1e293b; color: #fff; text-decoration: none; border-radius: 6px; font-size: 13px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { border-bottom: 1px solid #e2e8f0; padding: 8px 10px; text-align: left; vertical-align: top; }
+    th { background: #f1f5f9; font-weight: 600; }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+    .prio-p0 { background: #fee2e2; color: #991b1b; }
+    .prio-p1 { background: #fef3c7; color: #92400e; }
+    .prio-p2 { background: #e0f2fe; color: #075985; }
+    .st-passed { background: #dcfce7; color: #166534; }
+    .st-failed { background: #fee2e2; color: #991b1b; }
+    .st-error { background: #fef3c7; color: #92400e; }
+    .st-skipped { background: #f1f5f9; color: #475569; }
+    .ok-box { background: #dcfce7; color: #166534; padding: 12px 14px; border-radius: 8px; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1 style="margin:0 0 6px;">Credit Card Recommender — Automated Test Report</h1>
+        <div style="font-size:13px;color:#475569;">
+          Target: <code>http://127.0.0.1:8000</code> | Executed: 2026-11-19 16:21:34 (23.03s) | <code>--require-en=False</code>
+        </div>
+      </div>
+      <span class="badge badge-pass">PASS</span>
+    </header>
+
+    <div class="downloads" style="margin-bottom:16px;">
+      <a href="latest.xlsx">Download latest.xlsx</a>
+      <a href="test-history-summary.xlsx">Download History Excel</a>
+      <a href="latest.md">View latest.md</a>
+    </div>
+
+    <div class="cards">
+      <div class="card"><div class="k">Total</div><div class="v">35</div></div>
+      <div class="card"><div class="k">Passed</div><div class="v" style="color:#166534;">31</div></div>
+      <div class="card"><div class="k">Failed</div><div class="v" style="color:#991b1b;">0</div></div>
+      <div class="card"><div class="k">Error</div><div class="v" style="color:#92400e;">0</div></div>
+      <div class="card"><div class="k">Skipped</div><div class="v" style="color:#475569;">4</div></div>
+    </div>
+
+    <div class="panel">
+      <h2 style="margin-top:0;">Open Dev Issues</h2>
+      <p class='ok-box'>✅ 本次測試無待修復 Issue！(0 Open Issues)</p>
+    </div>
+
+    <div class="panel">
+      <h2 style="margin-top:0;">Breakdown by Priority</h2>
+      <table>
+        <thead><tr><th>Priority</th><th>Total</th><th>Passed</th><th>Failed</th><th>Error</th><th>Skipped</th></tr></thead>
+        <tbody><tr><td><span class='pill prio-p0'>P0</span></td><td>13</td><td>11</td><td>0</td><td>0</td><td>2</td></tr><tr><td><span class='pill prio-p1'>P1</span></td><td>21</td><td>19</td><td>0</td><td>0</td><td>2</td></tr><tr><td><span class='pill prio-p2'>P2</span></td><td>1</td><td>1</td><td>0</td><td>0</td><td>0</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h2 style="margin-top:0;">Test Cases (35)</h2>
+      <table>
+        <thead><tr><th>TC ID</th><th>Priority</th><th>Category</th><th>Title</th><th>Status</th><th>Duration</th><th>Error Reason</th></tr></thead>
+        <tbody><tr><td><code>TC-API-001</code></td><td><span class='pill prio-p0'>P0</span></td><td>API</td><td>首頁 HTTP 200 與 UTF-8 編碼檢查</td><td><span class='pill st-passed'>PASSED</span></td><td>0.01s</td><td>-</td></tr><tr><td><code>TC-API-002</code></td><td><span class='pill prio-p0'>P0</span></td><td>API</td><td>系統設定 /api/config 欄位驗證</td><td><span class='pill st-passed'>PASSED</span></td><td>0.00s</td><td>-</td></tr><tr><td><code>TC-API-003</code></td><td><span class='pill prio-p0'>P0</span></td><td>API</td><td>消費通路目錄 /api/channels 完整性檢查</td><td><span class='pill st-passed'>PASSED</span></td><td>0.00s</td><td>-</td></tr><tr><td><code>TC-API-004</code></td><td><span class='pill prio-p0'>P0</span></td><td>API</td><td>信用卡清單與回饋規則 /api/cards 驗證</td><td><span class='pill st-passed'>PASSED</span></td><td>0.00s</td><td>-</td></tr><tr><td><code>TC-API-005</code></td><td><span class='pill prio-p1'>P1</span></td><td>API</td><td>發卡銀行清單與級聯卡名查詢 API</td><td><span class='pill st-passed'>PASSED</span></td><td>0.03s</td><td>-</td></tr><tr><td><code>TC-API-006</code></td><td><span class='pill prio-p1'>P1</span></td><td>API</td><td>爬蟲清單與紀錄查詢 /api/scrapers &amp; /api/scrape-logs</td><td><span class='pill st-passed'>PASSED</span></td><td>0.01s</td><td>-</td></tr><tr><td><code>TC-API-007</code></td><td><span class='pill prio-p0'>P0</span></td><td>API</td><td>信用卡回饋試算排序與多卡組合 /api/recommend</td><td><span class='pill st-passed'>PASSED</span></td><td>0.00s</td><td>-</td></tr><tr><td><code>TC-API-008</code></td><td><span class='pill prio-p2'>P2</span></td><td>API</td><td>零消費邊界輸入 /api/recommend 驗證</td><td><span class='pill st-passed'>PASSED</span></td><td>0.00s</td><td>-</td></tr><tr><td><code>TC-API-009</code></td><td><span class='pill prio-p1'>P1</span></td><td>API</td><td>無低消門檻過濾參數 only_no_min_spend 驗證</td><td><span class='pill st-passed'>PASSED</span></td><td>0.01s</td><td>-</td></tr><tr><td><code>TC-API-010</code></td><td><span class='pill prio-p1'>P1</span></td><td>API</td><td>爬蟲管理端點權限保護驗證</td><td><span class='pill st-skipped'>SKIPPED</span></td><td>0.00s</td><td>目標站台未開啟管理員密碼或公開唯讀鎖定</td></tr><tr><td><code>TC-API-011</code></td><td><span class='pill prio-p0'>P0</span></td><td>i18n (EN)</td><td>後端 API 英文語系 (?lang=en) 翻譯完整性</td><td><span class='pill st-skipped'>SKIPPED</span></td><td>0.00s</td><td>目標站台尚未提供英語切換按鈕或 ?lang=en</td></tr><tr><td><code>TC-UI-001</code></td><td><span class='pill prio-p0'>P0</span></td><td>Functional UI</td><td>首頁初次載入預設套用 office 情境與推薦結果</td><td><span class='pill st-passed'>PASSED</span></td><td>1.12s</td><td>-</td></tr><tr><td><code>TC-UI-002</code></td><td><span class='pill prio-p1'>P1</span></td><td>Functional UI</td><td>情境範本切換：小資外食網購族 (office)</td><td><span class='pill st-passed'>PASSED</span></td><td>0.58s</td><td>-</td></tr><tr><td><code>TC-UI-003</code></td><td><span class='pill prio-p1'>P1</span></td><td>Functional UI</td><td>情境範本切換：日本旅遊高消費族 (travel)</td><td><span class='pill st-passed'>PASSED</span></td><td>0.45s</td><td>-</td></tr><tr><td><code>TC-UI-004</code></td><td><span class='pill prio-p1'>P1</span></td><td>Functional UI</td><td>情境範本切換：通勤超商日常族 (commuter)</td><td><span class='pill st-passed'>PASSED</span></td><td>0.43s</td><td>-</td></tr><tr><td><code>TC-UI-005</code></td><td><span class='pill prio-p1'>P1</span></td><td>Functional UI</td><td>清空歸零按鈕重置消費金額與空白提示</td><td><span class='pill st-passed'>PASSED</span></td><td>0.41s</td><td>-</td></tr><tr><td><code>TC-UI-006</code></td><td><span class='pill prio-p0'>P0</span></td><td>Functional UI</td><td>手動輸入各通路金額並送出試算</td><td><span class='pill st-passed'>PASSED</span></td><td>0.64s</td><td>-</td></tr><tr><td><code>TC-UI-007</code></td><td><span class='pill prio-p1'>P1</span></td><td>Functional UI</td><td>勾選「僅顯示無低消門檻」即時重算</td><td><span class='pill st-passed'>PASSED</span></td><td>0.45s</td><td>-</td></tr><tr><td><code>TC-UI-008</code></td><td><span class='pill prio-p1'>P1</span></td><td>Functional UI</td><td>「各卡通路比較表」分頁渲染與高回饋標示</td><td><span class='pill st-passed'>PASSED</span></td><td>0.51s</td><td>-</td></tr><tr><td><code>TC-UI-009</code></td><td><span class='pill prio-p1'>P1</span></td><td>Functional UI</td><td>「Playwright 爬蟲中心」銀行與卡名連動下拉選單</td><td><span class='pill st-passed'>PASSED</span></td><td>0.67s</td><td>-</td></tr><tr><td><code>TC-I18N-001</code></td><td><span class='pill prio-p0'>P0</span></td><td>Localization</td><td>繁體中文 (zh-Hant) 語系標記與字串完整性檢查</td><td><span class='pill st-passed'>PASSED</span></td><td>0.45s</td><td>-</td></tr><tr><td><code>TC-I18N-002</code></td><td><span class='pill prio-p1'>P1</span></td><td>Localization</td><td>台幣格式 (NT$)、百分比與台北時區日期格式驗證</td><td><span class='pill st-passed'>PASSED</span></td><td>0.39s</td><td>-</td></tr><tr><td><code>TC-I18N-003</code></td><td><span class='pill prio-p1'>P1</span></td><td>Localization</td><td>瀏覽器語系 zh-TW 相容性與功能運作</td><td><span class='pill st-passed'>PASSED</span></td><td>0.66s</td><td>-</td></tr><tr><td><code>TC-I18N-004</code></td><td><span class='pill prio-p1'>P1</span></td><td>Localization</td><td>瀏覽器語系 en-US 相容性與功能運作</td><td><span class='pill st-passed'>PASSED</span></td><td>0.66s</td><td>-</td></tr><tr><td><code>TC-I18N-005</code></td><td><span class='pill prio-p1'>P1</span></td><td>Localization</td><td>瀏覽器語系 ja-JP 相容性與功能運作</td><td><span class='pill st-passed'>PASSED</span></td><td>0.64s</td><td>-</td></tr><tr><td><code>TC-I18N-006</code></td><td><span class='pill prio-p0'>P0</span></td><td>i18n (EN)</td><td>右上角繁中/EN 切換、全頁面英文翻譯、持久化與切回繁中</td><td><span class='pill st-skipped'>SKIPPED</span></td><td>0.66s</td><td>目標站台尚未提供英語切換按鈕或 ?lang=en</td></tr><tr><td><code>TC-I18N-007</code></td><td><span class='pill prio-p1'>P1</span></td><td>i18n (EN)</td><td>網址參數 /?lang=en 直接進入英文介面驗證</td><td><span class='pill st-skipped'>SKIPPED</span></td><td>0.47s</td><td>目標站台尚未提供英語切換按鈕或 ?lang=en</td></tr><tr><td><code>TC-NEG-001</code></td><td><span class='pill prio-p1'>P1</span></td><td>Negative E2E</td><td>負向測試：/api/recommend 回傳 500 後前端容錯與恢復</td><td><span class='pill st-passed'>PASSED</span></td><td>0.58s</td><td>-</td></tr><tr><td><code>TC-NEG-002</code></td><td><span class='pill prio-p1'>P1</span></td><td>Negative E2E</td><td>負向測試：public_readonly 模式下鎖定爬蟲與隱藏 /docs</td><td><span class='pill st-passed'>PASSED</span></td><td>0.58s</td><td>-</td></tr><tr><td><code>TC-NEG-003</code></td><td><span class='pill prio-p1'>P1</span></td><td>Negative E2E</td><td>爬蟲中心 E2E 閉環：執行爬蟲後同步刷新結果區、日誌與比較表</td><td><span class='pill st-passed'>PASSED</span></td><td>0.61s</td><td>-</td></tr><tr><td><code>TC-MATH-001</code></td><td><span class='pill prio-p0'>P0</span></td><td>Math &amp; Logic</td><td>獨立演算法對拍：單卡各通路回饋與有效回饋率精算驗證</td><td><span class='pill st-passed'>PASSED</span></td><td>0.02s</td><td>-</td></tr><tr><td><code>TC-MATH-002</code></td><td><span class='pill prio-p0'>P0</span></td><td>Math &amp; Logic</td><td>多卡組合最佳化分配與多賺金額 (gain_over_best_single) 驗證</td><td><span class='pill st-passed'>PASSED</span></td><td>0.01s</td><td>-</td></tr><tr><td><code>TC-MATH-003</code></td><td><span class='pill prio-p1'>P1</span></td><td>Math &amp; Logic</td><td>月回饋上限溢額計算與低消門檻過濾邊界驗證</td><td><span class='pill st-passed'>PASSED</span></td><td>0.01s</td><td>-</td></tr><tr><td><code>TC-MATH-004</code></td><td><span class='pill prio-p1'>P1</span></td><td>Math &amp; Logic</td><td>前端 UI 渲染金額與 /api/recommend API 回傳數值一致性驗證</td><td><span class='pill st-passed'>PASSED</span></td><td>0.59s</td><td>-</td></tr><tr><td><code>TC-MATH-005</code></td><td><span class='pill prio-p0'>P0</span></td><td>Math &amp; Logic</td><td>黃金案例 (Golden Cases)：單調性、無負值與固定手工核算驗證</td><td><span class='pill st-passed'>PASSED</span></td><td>0.01s</td><td>-</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</body>
+</html>
