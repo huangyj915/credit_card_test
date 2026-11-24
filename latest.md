@@ -1,11 +1,11 @@
-# 自動化測試報告 (2026-11-23 08:39:58)
+# 自動化測試報告 (2026-11-24 10:44:05)
 
 ## 測試摘要
 
 - **結果**：`FAIL`
 - **目標網址**：`http://127.0.0.1:8000`
 - **強制英語 i18n (`--require-en`)**：`False`
-- **測試時間**：2026-11-23 08:39:58 ~ 08:40:34（總耗時 36.36s）
+- **測試時間**：2026-11-24 10:44:05 ~ 10:44:39（總耗時 33.32s）
 - **測試總數**：2 項｜✅ Passed: 1｜❌ Failed: 1｜⚠️ Error: 0｜⏭️ Skipped: 0
 
 ## 待修復 Issue 清單（開發端 Action Items）
@@ -26,8 +26,8 @@
 
 | TC ID | Priority | 分類 | 測試案例名稱 | 結果 | 耗時 (s) | 錯誤原因 | 根本原因 |
 |---|---|---|---|---|---:|---|---|
-| TC-SYNC-001 | P0 | Official Sync | 網站比較表顯示回饋率與後端 /api/cards 資料一致性檢查 | ✅ PASSED | 1.59 | - | - |
-| TC-SYNC-002 | P1 | Official Sync | 網站卡片回饋率與銀行官網實際公告比對（含官網連結有效性） | ❌ FAILED | 23.03 | E   AssertionError: Unreachable/no-rate official pages: ubot-jihe (no % extracted on https://card.ubot.com.tw/CardDetail/cardDetail202) | 功能或資料預期不符 (Assertion / Runtime Failure) |
+| TC-SYNC-001 | P0 | Official Sync | 網站比較表顯示回饋率與後端 /api/cards 資料一致性檢查 | ✅ PASSED | 1.65 | - | - |
+| TC-SYNC-002 | P1 | Official Sync | 網站卡片回饋率與銀行官網實際公告比對（含官網連結有效性） | ❌ FAILED | 23.52 | E   AssertionError: Unreachable/no-rate official pages: ubot-jihe (no % extracted on https://card.ubot.com.tw/CardDetail/cardDetail202) | 功能或資料預期不符 (Assertion / Runtime Failure) |
 
 ## 失敗 / 錯誤 / 略過原始細節
 
