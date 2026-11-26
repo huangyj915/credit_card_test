@@ -37,10 +37,10 @@
       <div>
         <h1 style="margin:0 0 6px;">Credit Card Recommender — Automated Test Report</h1>
         <div style="font-size:13px;color:#475569;">
-          Target: <code>http://127.0.0.1:8000</code> | Executed: 2026-11-25 09:39:13 (33.39s) | <code>--require-en=False</code>
+          Target: <code>http://127.0.0.1:8000</code> | Executed: 2026-11-26 09:15:02 (32.51s) | <code>--require-en=False</code>
         </div>
       </div>
-      <span class="badge badge-pass">PASS</span>
+      <span class="badge badge-fail">FAIL</span>
     </header>
 
     <div class="downloads" style="margin-bottom:16px;">
@@ -51,22 +51,22 @@
 
     <div class="cards">
       <div class="card"><div class="k">Total</div><div class="v">2</div></div>
-      <div class="card"><div class="k">Passed</div><div class="v" style="color:#166534;">2</div></div>
-      <div class="card"><div class="k">Failed</div><div class="v" style="color:#991b1b;">0</div></div>
+      <div class="card"><div class="k">Passed</div><div class="v" style="color:#166534;">1</div></div>
+      <div class="card"><div class="k">Failed</div><div class="v" style="color:#991b1b;">1</div></div>
       <div class="card"><div class="k">Error</div><div class="v" style="color:#92400e;">0</div></div>
       <div class="card"><div class="k">Skipped</div><div class="v" style="color:#475569;">0</div></div>
     </div>
 
     <div class="panel">
       <h2 style="margin-top:0;">Open Dev Issues</h2>
-      <p class='ok-box'>✅ 本次測試無待修復 Issue！(0 Open Issues)</p>
+      <table><thead><tr><th>Issue ID</th><th>Priority</th><th>Owner</th><th>Fail Rate</th><th>What to Fix</th><th>Root Cause</th><th>Fix Guide</th><th>TC IDs</th></tr></thead><tbody><tr><td>ISSUE-001</td><td><span class='pill prio-p1'>P1</span></td><td>開發端 (待確認)</td><td><span class='pill st-failed'>1/2 (50.0%)</span></td><td><strong>test_displayed_card_rates_match_official_bank_websites 執行失敗</strong><br><small>tests/test_official_rate_sync.py</small></td><td>功能或資料預期不符 (Assertion / Runtime Failure)</td><td>請開發端依錯誤訊息與測試步驟重現排查。</td><td><code>TC-SYNC-002</code></td></tr></tbody></table>
     </div>
 
     <div class="panel">
       <h2 style="margin-top:0;">Breakdown by Priority</h2>
       <table>
         <thead><tr><th>Priority</th><th>Total</th><th>Passed</th><th>Failed</th><th>Error</th><th>Skipped</th></tr></thead>
-        <tbody><tr><td><span class='pill prio-p0'>P0</span></td><td>1</td><td>1</td><td>0</td><td>0</td><td>0</td></tr><tr><td><span class='pill prio-p1'>P1</span></td><td>1</td><td>1</td><td>0</td><td>0</td><td>0</td></tr><tr><td><span class='pill prio-p2'>P2</span></td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr></tbody>
+        <tbody><tr><td><span class='pill prio-p0'>P0</span></td><td>1</td><td>1</td><td>0</td><td>0</td><td>0</td></tr><tr><td><span class='pill prio-p1'>P1</span></td><td>1</td><td>0</td><td>1</td><td>0</td><td>0</td></tr><tr><td><span class='pill prio-p2'>P2</span></td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr></tbody>
       </table>
     </div>
 
@@ -74,7 +74,7 @@
       <h2 style="margin-top:0;">Test Cases (2)</h2>
       <table>
         <thead><tr><th>TC ID</th><th>Priority</th><th>Category</th><th>Title</th><th>Status</th><th>Duration</th><th>Error Reason</th></tr></thead>
-        <tbody><tr><td><code>TC-SYNC-001</code></td><td><span class='pill prio-p0'>P0</span></td><td>Official Sync</td><td>網站比較表顯示回饋率與後端 /api/cards 資料一致性檢查</td><td><span class='pill st-passed'>PASSED</span></td><td>1.33s</td><td>-</td></tr><tr><td><code>TC-SYNC-002</code></td><td><span class='pill prio-p1'>P1</span></td><td>Official Sync</td><td>網站卡片回饋率與銀行官網實際公告比對（含官網連結有效性）</td><td><span class='pill st-passed'>PASSED</span></td><td>24.61s</td><td>-</td></tr></tbody>
+        <tbody><tr><td><code>TC-SYNC-001</code></td><td><span class='pill prio-p0'>P0</span></td><td>Official Sync</td><td>網站比較表顯示回饋率與後端 /api/cards 資料一致性檢查</td><td><span class='pill st-passed'>PASSED</span></td><td>2.55s</td><td>-</td></tr><tr><td><code>TC-SYNC-002</code></td><td><span class='pill prio-p1'>P1</span></td><td>Official Sync</td><td>網站卡片回饋率與銀行官網實際公告比對（含官網連結有效性）</td><td><span class='pill st-failed'>FAILED</span></td><td>26.07s</td><td>E   AssertionError: Unreachable/no-rate official pages: ubot-jihe (no % extracted on https://card.ubot.com.tw/CardDetail/cardDetail202)</td></tr></tbody>
       </table>
     </div>
   </div>
