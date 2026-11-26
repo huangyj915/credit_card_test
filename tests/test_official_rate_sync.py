@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import time
 from urllib.parse import urlparse
 import pytest
 import requests
@@ -125,47 +126,72 @@ def test_displayed_card_rates_match_official_bank_websites(
                 dead_urls.append(f"{slug} (blocked unapproved/non-HTTPS official_url={url})")
                 continue
 
-            pg = ctx.new_page()
-            try:
-                resp = pg.goto(url, wait_until="domcontentloaded", timeout=15000)
+            max_attempts = 2
+            for attempt in range(1, max_attempts + 1):
+                pg = ctx.new_page()
                 try:
-                    pg.wait_for_function(
-                        "() => document.body && document.body.innerText.trim().length > 50",
-                        timeout=6000,
-                    )
-                except Exception:
-                    pass
+                    resp = pg.goto(url, wait_until="domcontentloaded", timeout=20000)
+                    try:
+                        if rule_rates:
+                            # Wait for SPA card-detail content (percentage rates) or an explicit error page
+                            pg.wait_for_function(
+                                "() => { const t = (document.body && document.body.innerText) || ''; "
+                                "return /\\d+(?:\\.\\d+)?\\s*%/.test(t) || "
+                                "/(404\\s*找不到頁面|找不到頁面|系統發生錯誤|Page\\s*Not\\s*Found|404\\s*Not\\s*Found)/i.test(t); }",
+                                timeout=10000,
+                            )
+                        else:
+                            pg.wait_for_function(
+                                "() => document.body && document.body.innerText.trim().length > 50",
+                                timeout=6000,
+                            )
+                    except Exception:
+                        try:
+                            pg.wait_for_load_state("networkidle", timeout=4000)
+                        except Exception:
+                            pass
 
-                status = resp.status if resp else 0
-                full_body = " ".join(pg.locator("body").inner_text().split())
+                    status = resp.status if resp else 0
+                    full_body = " ".join(pg.locator("body").inner_text().split())
 
-                if status >= 400 or len(full_body) < 50 or DEAD_PAGE_PATTERNS.search(full_body):
-                    dead_urls.append(
-                        f"{slug} (HTTP={status}, len={len(full_body)}, snippet={full_body[:40]!r}, url={url})"
-                    )
-                    continue
+                    if status >= 400 or len(full_body) < 50 or DEAD_PAGE_PATTERNS.search(full_body):
+                        if status == 0 and attempt < max_attempts:
+                            time.sleep(1.5)
+                            continue
+                        dead_urls.append(
+                            f"{slug} (HTTP={status}, len={len(full_body)}, snippet={full_body[:40]!r}, url={url})"
+                        )
+                        break
 
-                if not rule_rates:
-                    continue
+                    if not rule_rates:
+                        break
 
-                scoped_text = _extract_main_content_text(pg)
-                official_pcts = {round(float(m), 4) for m in PCT_RE.findall(scoped_text)}
-                if not official_pcts:
-                    official_pcts = {round(float(m), 4) for m in PCT_RE.findall(full_body)}
-                if not official_pcts:
-                    unverified_blocked.append(f"{slug} (no % extracted on {url})")
-                    continue
+                    scoped_text = _extract_main_content_text(pg)
+                    official_pcts = {round(float(m), 4) for m in PCT_RE.findall(scoped_text)}
+                    if not official_pcts:
+                        official_pcts = {round(float(m), 4) for m in PCT_RE.findall(full_body)}
+                    if not official_pcts:
+                        if attempt < max_attempts:
+                            time.sleep(1.5)
+                            continue
+                        unverified_blocked.append(f"{slug} (no % extracted on {url})")
+                        break
 
-                missing = [r for r in rule_rates if round(r, 4) not in official_pcts]
-                if missing:
-                    sample_official = sorted(official_pcts)[:12]
-                    rate_mismatches.append(
-                        f"{slug}: site_rules={missing}% not found on official page (official_pcts={sample_official}, url={url})"
-                    )
-            except Exception as exc:
-                unverified_blocked.append(f"{slug}: fetch error {str(exc).splitlines()[0][:80]}")
-            finally:
-                pg.close()
+                    missing = [r for r in rule_rates if round(r, 4) not in official_pcts]
+                    if missing:
+                        sample_official = sorted(official_pcts)[:12]
+                        rate_mismatches.append(
+                            f"{slug}: site_rules={missing}% not found on official page (official_pcts={sample_official}, url={url})"
+                        )
+                    break
+                except Exception as exc:
+                    if attempt < max_attempts:
+                        time.sleep(1.5)
+                        continue
+                    unverified_blocked.append(f"{slug}: fetch error {str(exc).splitlines()[0][:80]}")
+                    break
+                finally:
+                    pg.close()
     finally:
         ctx.close()
 

@@ -71,7 +71,7 @@ def test_public_readonly_locks_scraper_controls(make_page, base_url: str) -> Non
     scraper = ScraperTab(pg)
     home.goto_and_wait_ready(base_url)
 
-    expect(home.docs_link).to_have_class(re.compile(r"\bhidden\b"))
+    expect(home.docs_link).to_be_hidden()
 
     home.switch_tab("scraper")
     expect(scraper.auth_bar).not_to_have_class(re.compile(r"\bhidden\b"))
