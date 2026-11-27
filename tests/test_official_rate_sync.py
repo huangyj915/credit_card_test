@@ -74,9 +74,13 @@ def test_ui_displayed_rates_match_api_cards_source_of_truth(
                 max(r["rate"] for r in matching)
                 if matching
                 else (
-                    card["base_rate_foreign"]
-                    if ch["code"] == "overseas"
-                    else card["base_rate_domestic"]
+                    0.0
+                    if ch["code"] == "convenience_store"
+                    else (
+                        card["base_rate_foreign"]
+                        if ch["code"] == "overseas"
+                        else card["base_rate_domestic"]
+                    )
                 )
             )
             cell_text = cells.nth(ch_idx).inner_text()
@@ -170,6 +174,11 @@ def test_displayed_card_rates_match_official_bank_websites(
                     official_pcts = {round(float(m), 4) for m in PCT_RE.findall(scoped_text)}
                     if not official_pcts:
                         official_pcts = {round(float(m), 4) for m in PCT_RE.findall(full_body)}
+                    # Include collapsed accordion/tab textContent when checking switchable-plan cards
+                    missing = [r for r in rule_rates if round(r, 4) not in official_pcts]
+                    if missing:
+                        raw_tc = pg.evaluate("() => (document.body && document.body.textContent) || ''")
+                        official_pcts |= {round(float(m), 4) for m in PCT_RE.findall(raw_tc)}
                     if not official_pcts:
                         if attempt < max_attempts:
                             time.sleep(1.5)

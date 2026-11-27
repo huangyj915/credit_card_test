@@ -240,3 +240,37 @@ def test_truncated_condition_note_renders_more_link_to_source(
         expect(en_links.first).to_be_visible()
         expect(en_links.first).to_have_text("more")
         assert (en_links.first.get_attribute("href") or "").startswith("http")
+
+
+def test_wallet_custom_card_remove_even_with_null_id(page: Page, base_url: str) -> None:
+    """Clicking '移除' must delete a custom wallet card even if its stored id was null."""
+    home = HomePage(page)
+    home.goto_and_wait_ready(base_url)
+
+    page.evaluate(
+        """() => {
+            window.localStorage.setItem("cc_custom_cards", JSON.stringify([
+                {
+                    id: null,
+                    bank_name: "測試銀行",
+                    card_name: "測試移除專用卡",
+                    base_rate_domestic: 1.5,
+                    base_rate_foreign: 2.0,
+                    rules: [{ channel_code: "dining", rate: 3.0, monthly_cap_ntd: 300, cap_applies_to: "bonus" }]
+                }
+            ]));
+        }"""
+    )
+    home.goto_and_wait_ready(base_url)
+
+    page.locator('#customCardsTabBtn').click()
+    item = page.locator("#userCustomCardsList .user-custom-card-item")
+    expect(item).to_have_count(1)
+    expect(item.first).to_contain_text("測試移除專用卡")
+
+    with page.expect_response(is_recommend_post):
+        item.first.locator(".btn-delete-custom").click()
+
+    expect(page.locator("#userCustomCardsList .user-custom-card-item")).to_have_count(0)
+    stored = page.evaluate('() => JSON.parse(window.localStorage.getItem("cc_custom_cards") || "[]")')
+    assert stored == [], f"Expected cc_custom_cards to be empty after removal, got {stored}"

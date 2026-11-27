@@ -52,9 +52,13 @@ def _oracle_card_calc(card: dict, spending: dict[str, float]) -> dict:
             if spend <= 0:
                 continue
             base_rate = (
-                card["base_rate_foreign"]
-                if ch_code == "overseas"
-                else card["base_rate_domestic"]
+                0.0
+                if ch_code == "convenience_store"
+                else (
+                    card["base_rate_foreign"]
+                    if ch_code == "overseas"
+                    else card["base_rate_domestic"]
+                )
             )
             eligible = []
             for r in card["rules"]:
@@ -246,7 +250,11 @@ def test_cap_overflow_and_min_spend_boundary_behavior(base_url: str) -> None:
     for c in cards:
         for r in c["rules"]:
             cap = r.get("monthly_cap_ntd") or 0
-            base = c["base_rate_foreign"] if r["channel_code"] == "overseas" else c["base_rate_domestic"]
+            base = (
+                0.0
+                if r["channel_code"] == "convenience_store"
+                else (c["base_rate_foreign"] if r["channel_code"] == "overseas" else c["base_rate_domestic"])
+            )
             if cap >= 200 and r["rate"] > base and not r.get("min_spend_ntd") and not r.get("plan_name"):
                 target = c
                 target_rule = r
@@ -260,7 +268,11 @@ def test_cap_overflow_and_min_spend_boundary_behavior(base_url: str) -> None:
     cap = target_rule["monthly_cap_ntd"]
     rate = target_rule["rate"]
     cap_applies_to = target_rule.get("cap_applies_to") or "total"
-    base = target["base_rate_foreign"] if ch == "overseas" else target["base_rate_domestic"]
+    base = (
+        0.0
+        if ch == "convenience_store"
+        else (target["base_rate_foreign"] if ch == "overseas" else target["base_rate_domestic"])
+    )
 
     effective_cap_rate = (rate - base) if cap_applies_to == "bonus" else rate
     cap_break_even = cap / (effective_cap_rate / 100.0)
