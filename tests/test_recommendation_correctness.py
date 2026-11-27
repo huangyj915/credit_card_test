@@ -203,18 +203,30 @@ def test_combo_allocation_maximizes_channel_rewards_and_gain(base_url: str) -> N
         for r in recs
     }
 
-    alloc_sum = 0.0
+    by_channel: dict[str, list[dict]] = {}
     for alloc in combo["allocations"]:
-        ch = alloc["channel_code"]
-        chosen_reward = alloc["reward_ntd"]
+        by_channel.setdefault(alloc["channel_code"], []).append(alloc)
+
+    assert set(by_channel.keys()) == set(spending.keys()), (
+        f"Combo allocations channels mismatch: {set(by_channel.keys())} vs {set(spending.keys())}"
+    )
+
+    alloc_sum = 0.0
+    for ch, items in by_channel.items():
+        ch_spend = round(sum(a["spend_ntd"] for a in items), 2)
+        assert abs(ch_spend - spending[ch]) <= 0.1, (
+            f"Combo channel spend sum mismatch for {ch}: {ch_spend} vs {spending[ch]}"
+        )
+        ch_reward = round(sum(a["reward_ntd"] for a in items), 2)
         max_possible = max(
             reward_by_card_channel[slug][ch] for slug in reward_by_card_channel
         )
-        assert abs(chosen_reward - max_possible) <= 0.05, (
-            f"Combo picked suboptimal card {alloc['card_slug']} ({chosen_reward}) "
-            f"for {ch}; max single-card channel reward is {max_possible}"
+        # Same-channel overflow splitting can strictly beat any single card's capped reward
+        assert ch_reward >= max_possible - 0.05, (
+            f"Combo picked suboptimal allocation ({ch_reward}) for {ch}; "
+            f"max single-card channel reward is {max_possible}"
         )
-        alloc_sum += chosen_reward
+        alloc_sum += ch_reward
 
     assert abs(combo["total_reward_ntd"] - round(alloc_sum, 2)) <= 0.1
     expected_gain = round(combo["total_reward_ntd"] - best_single["total_reward_ntd"], 2)

@@ -195,7 +195,7 @@ def test_english_i18n_switch_and_translations(
         "submit_btn": '#spendingForm button[type="submit"]',
         "tab_recommend": '.tab-btn[data-tab="recommend"]',
         "tab_matrix": '.tab-btn[data-tab="matrix"]',
-        "tab_scraper": '.tab-btn[data-tab="scraper"]',
+        "tab_custom": '.tab-btn[data-tab="custom"]',
         "footer": ".footer p",
     }
     untranslated = {}
@@ -227,10 +227,10 @@ def test_english_i18n_switch_and_translations(
     cjk_matrix_lines = [line.strip() for line in matrix_text.splitlines() if CJK_RE.search(line)]
     assert not cjk_matrix_lines, f"Untranslated CJK lines in Matrix tab: {cjk_matrix_lines[:5]}"
 
-    home.switch_tab("scraper")
-    scraper_text = home.tab_panel("scraper").inner_text()
-    cjk_scraper_lines = [line.strip() for line in scraper_text.splitlines() if CJK_RE.search(line)]
-    assert not cjk_scraper_lines, f"Untranslated CJK lines in Scraper tab: {cjk_scraper_lines[:5]}"
+    home.switch_tab("custom")
+    custom_text = home.tab_panel("custom").inner_text()
+    cjk_custom_lines = [line.strip() for line in custom_text.splitlines() if CJK_RE.search(line)]
+    assert not cjk_custom_lines, f"Untranslated CJK lines in Custom Cards tab: {cjk_custom_lines[:5]}"
 
     body_text = pg.locator("body").inner_text()
     assert "\ufffd" not in body_text

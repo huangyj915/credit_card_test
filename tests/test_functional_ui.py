@@ -110,8 +110,13 @@ def test_matrix_tab_renders_cards_and_channels(page: Page, base_url: str) -> Non
 def test_scraper_tab_controls_and_cascading_bank_cards(page: Page, base_url: str) -> None:
     home = HomePage(page)
     scraper = ScraperTab(page)
-    home.goto_and_wait_ready(base_url)
 
+    # Regular visitors on "/" must not see the admin scraper tab
+    home.goto_and_wait_ready(base_url)
+    expect(home.tab_btn("scraper")).to_be_hidden()
+
+    # Admin entry "/?admin=1" unlocks the scraper console tab
+    home.goto_and_wait_ready(f"{base_url.rstrip('/')}/?admin=1")
     home.switch_tab("scraper")
     expect(scraper.scraper_checks.first).to_be_visible()
     expect(scraper.mode_demo_radio).to_be_checked()
@@ -145,9 +150,9 @@ def test_no_horizontal_overflow_across_tabs(
 ) -> None:
     pg, errors = make_page(locale="zh-TW", viewport=viewport)
     home = HomePage(pg)
-    home.goto_and_wait_ready(base_url)
+    home.goto_and_wait_ready(f"{base_url.rstrip('/')}/?admin=1")
 
-    for tab in ("recommend", "matrix", "scraper"):
+    for tab in ("recommend", "matrix", "custom", "scraper"):
         home.switch_tab(tab)
         overflow = home.horizontal_overflow_px()
         assert overflow <= 1, f"Horizontal overflow of {overflow}px on tab={tab}, viewport={viewport}"

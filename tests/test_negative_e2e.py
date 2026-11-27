@@ -69,7 +69,7 @@ def test_public_readonly_locks_scraper_controls(make_page, base_url: str) -> Non
 
     home = HomePage(pg)
     scraper = ScraperTab(pg)
-    home.goto_and_wait_ready(base_url)
+    home.goto_and_wait_ready(f"{base_url.rstrip('/')}/?admin=1")
 
     expect(home.docs_link).to_be_hidden()
 
@@ -129,7 +129,7 @@ def test_scraper_demo_closed_loop_refreshes_ui(make_page, base_url: str) -> None
 
     home = HomePage(pg)
     scraper = ScraperTab(pg)
-    home.goto_and_wait_ready(base_url)
+    home.goto_and_wait_ready(f"{base_url.rstrip('/')}/?admin=1")
     home.switch_tab("scraper")
 
     with pg.expect_response(is_recommend_post):
