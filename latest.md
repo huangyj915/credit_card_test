@@ -1,12 +1,12 @@
-# 自動化測試報告 (2026-11-27 09:29:33)
+# 自動化測試報告 (2026-11-27 15:20:42)
 
 ## 測試摘要
 
 - **結果**：`PASS`
 - **目標網址**：`http://127.0.0.1:8000`
 - **強制英語 i18n (`--require-en`)**：`False`
-- **測試時間**：2026-11-27 09:29:33 ~ 09:30:02（總耗時 28.66s）
-- **測試總數**：2 項｜✅ Passed: 2｜❌ Failed: 0｜⚠️ Error: 0｜⏭️ Skipped: 0
+- **測試時間**：2026-11-27 15:20:42 ~ 15:21:08（總耗時 25.78s）
+- **測試總數**：39 項｜✅ Passed: 37｜❌ Failed: 0｜⚠️ Error: 0｜⏭️ Skipped: 2
 
 ## 待修復 Issue 清單（開發端 Action Items）
 
@@ -16,13 +16,72 @@
 
 | Priority | 總數 | Passed | Failed | Error | Skipped |
 |---|---:|---:|---:|---:|---:|
-| P0 | 1 | 1 | 0 | 0 | 0 |
-| P1 | 1 | 1 | 0 | 0 | 0 |
-| P2 | 0 | 0 | 0 | 0 | 0 |
+| P0 | 14 | 13 | 0 | 0 | 1 |
+| P1 | 24 | 23 | 0 | 0 | 1 |
+| P2 | 1 | 1 | 0 | 0 | 0 |
 
 ## Test Case 明細
 
 | TC ID | Priority | 分類 | 測試案例名稱 | 結果 | 耗時 (s) | 錯誤原因 | 根本原因 |
 |---|---|---|---|---|---:|---|---|
-| TC-SYNC-001 | P0 | Official Sync | 網站比較表顯示回饋率與後端 /api/cards 資料一致性檢查 | ✅ PASSED | 1.51 | - | - |
-| TC-SYNC-002 | P1 | Official Sync | 網站卡片回饋率與銀行官網實際公告比對（含官網連結有效性） | ✅ PASSED | 25.16 | - | - |
+| TC-API-001 | P0 | API | 首頁 HTTP 200 與 UTF-8 編碼檢查 | ✅ PASSED | 0.01 | - | - |
+| TC-API-002 | P0 | API | 系統設定 /api/config 欄位驗證 | ✅ PASSED | 0.00 | - | - |
+| TC-API-003 | P0 | API | 消費通路目錄 /api/channels 完整性檢查 | ✅ PASSED | 0.00 | - | - |
+| TC-API-004 | P0 | API | 信用卡清單與回饋規則 /api/cards 驗證 | ✅ PASSED | 0.00 | - | - |
+| TC-API-005 | P1 | API | 發卡銀行清單與級聯卡名查詢 API | ✅ PASSED | 0.01 | - | - |
+| TC-API-006 | P1 | API | 爬蟲清單與紀錄查詢 /api/scrapers & /api/scrape-logs | ✅ PASSED | 0.01 | - | - |
+| TC-API-007 | P0 | API | 信用卡回饋試算排序與多卡組合 /api/recommend | ✅ PASSED | 0.01 | - | - |
+| TC-API-008 | P2 | API | 零消費邊界輸入 /api/recommend 驗證 | ✅ PASSED | 0.01 | - | - |
+| TC-API-009 | P1 | API | 無低消門檻過濾參數 only_no_min_spend 驗證 | ✅ PASSED | 0.01 | - | - |
+| TC-API-010 | P1 | API | 爬蟲管理端點權限保護驗證 | ⏭️ SKIPPED | 0.00 | 目標站台未開啟管理員密碼或公開唯讀鎖定 | 環境設定差異 (Environment Config) — 本機測試未設定 ADMIN_TOKEN |
+| TC-API-011 | P0 | i18n (EN) | 後端 API 英文語系 (?lang=en) 翻譯完整性 | ✅ PASSED | 0.02 | - | - |
+| TC-UI-001 | P0 | Functional UI | 首頁初次載入預設套用 office 情境與推薦結果 | ✅ PASSED | 0.93 | - | - |
+| TC-UI-002 | P1 | Functional UI | 情境範本切換：小資外食網購族 (office) | ✅ PASSED | 0.65 | - | - |
+| TC-UI-003 | P1 | Functional UI | 情境範本切換：日本旅遊高消費族 (travel) | ✅ PASSED | 0.55 | - | - |
+| TC-UI-004 | P1 | Functional UI | 情境範本切換：通勤超商日常族 (commuter) | ✅ PASSED | 0.52 | - | - |
+| TC-UI-005 | P1 | Functional UI | 清空歸零按鈕重置消費金額與空白提示 | ✅ PASSED | 0.48 | - | - |
+| TC-UI-006 | P0 | Functional UI | 手動輸入各通路金額並送出試算 | ✅ PASSED | 0.76 | - | - |
+| TC-UI-007 | P1 | Functional UI | 勾選「僅顯示無低消門檻」即時重算 | ✅ PASSED | 0.50 | - | - |
+| TC-UI-008 | P1 | Functional UI | 「各卡通路比較表」分頁渲染與高回饋標示 | ✅ PASSED | 0.47 | - | - |
+| TC-UI-009 | P1 | Functional UI | 「Playwright 爬蟲中心」銀行與卡名連動下拉選單 | ✅ PASSED | 0.88 | - | - |
+| TC-I18N-001 | P0 | Localization | 繁體中文 (zh-Hant) 語系標記與字串完整性檢查 | ✅ PASSED | 0.40 | - | - |
+| TC-I18N-002 | P1 | Localization | 台幣格式 (NT$)、百分比與台北時區日期格式驗證 | ✅ PASSED | 0.42 | - | - |
+| TC-I18N-003 | P1 | Localization | 瀏覽器語系 zh-TW 相容性與功能運作 | ✅ PASSED | 0.77 | - | - |
+| TC-I18N-004 | P1 | Localization | 瀏覽器語系 en-US 相容性與功能運作 | ✅ PASSED | 0.79 | - | - |
+| TC-I18N-005 | P1 | Localization | 瀏覽器語系 ja-JP 相容性與功能運作 | ✅ PASSED | 0.76 | - | - |
+| TC-I18N-006 | P0 | i18n (EN) | 右上角繁中/EN 切換、全頁面英文翻譯、持久化與切回繁中 | ✅ PASSED | 2.03 | - | - |
+| TC-I18N-007 | P1 | i18n (EN) | 網址參數 /?lang=en 直接進入英文介面驗證 | ✅ PASSED | 0.45 | - | - |
+| TC-NEG-001 | P1 | Negative E2E | 負向測試：/api/recommend 回傳 500 後前端容錯與恢復 | ✅ PASSED | 0.88 | - | - |
+| TC-NEG-002 | P1 | Negative E2E | 負向測試：public_readonly 模式下鎖定爬蟲與隱藏 /docs | ✅ PASSED | 0.72 | - | - |
+| TC-NEG-003 | P1 | Negative E2E | 爬蟲中心 E2E 閉環：執行爬蟲後同步刷新結果區、日誌與比較表 | ✅ PASSED | 0.82 | - | - |
+| TC-MATH-001 | P0 | Math & Logic | 獨立演算法對拍：單卡各通路回饋與有效回饋率精算驗證 | ✅ PASSED | 0.04 | - | - |
+| TC-MATH-002 | P0 | Math & Logic | 多卡組合最佳化分配與多賺金額 (gain_over_best_single) 驗證 | ✅ PASSED | 0.01 | - | - |
+| TC-MATH-003 | P1 | Math & Logic | 月回饋上限溢額計算與低消門檻過濾邊界驗證 | ✅ PASSED | 0.01 | - | - |
+| TC-MATH-004 | P1 | Math & Logic | 前端 UI 渲染金額與 /api/recommend API 回傳數值一致性驗證 | ✅ PASSED | 0.97 | - | - |
+| TC-MATH-005 | P0 | Math & Logic | 黃金案例 (Golden Cases)：單調性、無負值與固定手工核算驗證 | ✅ PASSED | 0.02 | - | - |
+| TC-SEC-001 | P0 | Security | 安全回歸：所有寫入端點於鎖定模式下皆拒絕未授權呼叫 | ⏭️ SKIPPED | 0.00 | 目標站台未開啟管理員密碼或公開唯讀鎖定 | 環境設定差異 (Environment Config) — 本機測試未設定 ADMIN_TOKEN |
+| TC-SEC-002 | P1 | Security | 安全回歸：/api/scrape-logs limit 參數超大值與負值邊界防護 | ✅ PASSED | 0.01 | - | - |
+| TC-SEC-003 | P1 | Security | 報表安全：Excel 公式注入防護與敏感憑證遮罩單元驗證 | ✅ PASSED | 0.00 | - | - |
+| TC-SEC-004 | P1 | Security | 安全回歸：銀行官網白名單攔截非 HTTPS、內部位址與未核准網域 | ✅ PASSED | 0.00 | - | - |
+
+## 失敗 / 錯誤 / 略過原始細節
+
+### TC-API-010 (P1) `tests/test_api.py::test_admin_scrape_endpoint_protected_when_configured` — SKIPPED
+
+- **錯誤原因**：目標站台未開啟管理員密碼或公開唯讀鎖定
+- **根本原因**：環境設定差異 (Environment Config) — 本機測試未設定 ADMIN_TOKEN
+- **建議處理**：屬正常跳過；若需驗證權限防護，請設定 ADMIN_TOKEN 後再測。
+
+```text
+Target instance is running without admin_protected or public_readonly lock
+```
+
+### TC-SEC-001 (P0) `tests/test_security.py::test_write_endpoints_protected_when_locked` — SKIPPED
+
+- **錯誤原因**：目標站台未開啟管理員密碼或公開唯讀鎖定
+- **根本原因**：環境設定差異 (Environment Config) — 本機測試未設定 ADMIN_TOKEN
+- **建議處理**：屬正常跳過；若需驗證權限防護，請設定 ADMIN_TOKEN 後再測。
+
+```text
+Target instance is running without admin_protected or public_readonly lock
+```
